@@ -97,6 +97,10 @@ func _on_player_landed(pos: Vector2):
 		land_particles.position = pos
 		land_particles.restart()
 
+	var land_se = get_node_or_null("LandSE")
+	if land_se != null:
+		land_se.play()
+
 func game_over():
 	if state != GameState.PLAYING:
 		return
