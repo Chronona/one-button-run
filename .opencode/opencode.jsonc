@@ -1,0 +1,49 @@
+{
+  "preset": "muse-spark-free",
+  "presets": {
+    "muse-spark-free": {
+      "orchestrator": {
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "temperature": 0.4,
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "temperature": 0.4,
+        "skills": ["simplify"],
+        "mcps": []
+      },
+      "explorer": {
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "temperature": 0.2,
+        "skills": [],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "temperature": 0.2,
+        "skills": [],
+        "mcps": ["context7", "gh_grep"]
+      },
+      "designer": {
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "temperature": 0.3,
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "temperature": 0.2,
+        "skills": [],
+        "mcps": []
+      },
+      "observer": {
+        "model": "opencode/muse-spark-1.3-contributor-free",
+        "temperature": 0.2,
+        "skills": [],
+        "mcps": []
+      }
+    }
+  }
+}
