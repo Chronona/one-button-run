@@ -31,7 +31,7 @@ jobs:
           unzip -o /tmp/godot.zip -d /tmp/godot
           sudo mv "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
           sudo chmod +x /usr/local/bin/godot
-          GODOT_FULL_VERSION=$(godot --version | grep -oP '^Godot Engine v\K[^ ]+' | sed 's/\.official.*//')
+          GODOT_FULL_VERSION=$(godot --headless --version | grep -oP '^Godot Engine v\K[^ ]+' | sed 's/\.official.*//')
           echo "Godot version: $GODOT_FULL_VERSION"
 
           curl -fsSL --retry 3 --retry-delay 5 -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
