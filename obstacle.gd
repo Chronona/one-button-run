@@ -1,11 +1,12 @@
 extends Area2D
 
-@export var speed = 200.0
+@export var speed: float = 200.0
 
-func _process(delta):
-	# 障害物を左に移動（速度はスポーン時に上書きされる）
+const DESPAWN_X := -50.0
+
+func _process(delta: float) -> void:
 	position.x -= speed * delta
 
-	# 画面外に出たら削除
-	if position.x < -50:
+	# 左端まで移動したら解放
+	if position.x < DESPAWN_X:
 		queue_free()

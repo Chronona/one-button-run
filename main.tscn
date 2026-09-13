@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://c941s578u5i0"]
+[gd_scene load_steps=13 format=3 uid="uid://c941s578u5i0"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_1"]
 [ext_resource type="Script" path="res://player.gd" id="1_2"]
@@ -7,6 +7,11 @@
 [ext_resource type="Texture2D" path="res://assets/obstacles/obstacle.png" id="1_5"]
 [ext_resource type="Texture2D" path="res://assets/bg/background1.png" id="1_6"]
 [ext_resource type="Texture2D" path="res://assets/bg/background2.png" id="1_7"]
+[ext_resource type="AudioStreamWAV" path="res://assets/se/jump.wav" id="1_8"]
+[ext_resource type="AudioStreamWAV" path="res://assets/se/gameover.wav" id="1_9"]
+[ext_resource type="AudioStreamWAV" path="res://assets/se/highscore.wav" id="1_10"]
+[ext_resource type="AudioStreamWAV" path="res://assets/se/land.wav" id="1_11"]
+[ext_resource type="Texture2D" path="res://assets/particles/dot.png" id="1_12"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_1")
@@ -76,3 +81,67 @@ offset_top = 300.0
 offset_right = 700.0
 offset_bottom = 330.0
 text = "Game Over - Spaceで再開"
+
+[node name="JumpParticles" type="CPUParticles2D" parent="."]
+emitting = false
+one_shot = true
+amount = 20.0
+lifetime = 0.5
+explosiveness = 0.0
+direction = Vector2(0, -1)
+spread = 30.0
+gravity = Vector2(0, 500)
+initial_velocity_min = Vector2(-10, -40)
+initial_velocity_max = Vector2(10, -20)
+scale_amount_min = 0.5
+scale_amount_max = 1.0
+texture = ExtResource("1_12")
+color = Color(0.55, 0.85, 1, 1)
+
+[node name="LandParticles" type="CPUParticles2D" parent="."]
+emitting = false
+one_shot = true
+amount = 30.0
+lifetime = 0.8
+explosiveness = 0.5
+direction = Vector2(0, -1)
+spread = 60.0
+gravity = Vector2(0, 500)
+initial_velocity_min = Vector2(-30, -30)
+initial_velocity_max = Vector2(30, 30)
+scale_amount_min = 0.3
+scale_amount_max = 0.8
+texture = ExtResource("1_12")
+color = Color(0.95, 0.85, 0.65, 1)
+
+[node name="CrashParticles" type="CPUParticles2D" parent="."]
+emitting = false
+one_shot = true
+amount = 50.0
+lifetime = 0.8
+explosiveness = 1.0
+direction = Vector2(0, -1)
+spread = 45.0
+gravity = Vector2(0, 500)
+initial_velocity_min = Vector2(-50, -50)
+initial_velocity_max = Vector2(50, 50)
+scale_amount_min = 0.4
+scale_amount_max = 1.2
+texture = ExtResource("1_12")
+color = Color(1, 0.5, 0.25, 1)
+
+[node name="JumpSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_8")
+volume_db = -6.0
+
+[node name="GameOverSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_9")
+volume_db = -12.0
+
+[node name="HighScoreSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_10")
+volume_db = -6.0
+
+[node name="LandSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_11")
+volume_db = -12.0
