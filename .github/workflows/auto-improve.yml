@@ -70,6 +70,6 @@ jobs:
             2. Fix any Godot script errors or warnings in main.gd, player.gd, or obstacle.gd.
             3. Make one small, safe improvement: refactor duplicated code, improve variable naming, add a minor gameplay tweak, or improve UI/UX feedback. Do not rewrite the whole game or change its core one-button mechanic.
             4. Run the check again to confirm no new errors were introduced.
-            5. Finish; the CI will publish your changes as a pull request.
+            5. Finish; the CI will publish your changes as a pull request. The pull request title and description must be written in Japanese.
           use-github-token: true
           timeout-minutes: 30
