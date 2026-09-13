@@ -79,15 +79,10 @@ jobs:
           set -euo pipefail
           mkdir -p build/web
 
-      - name: Import assets
-        run: |
-          set -euo pipefail
-          godot --headless --path . --import --quit
-
       - name: Export project
         run: |
           set -euo pipefail
-          godot --headless -v --path . --export-release "Web" build/web/index.html
+          godot --headless --path . --export-release "Web" build/web/index.html
 
       - name: Create .nojekyll file
         run: |
