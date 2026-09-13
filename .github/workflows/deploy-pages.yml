@@ -30,13 +30,18 @@ jobs:
           unzip -o /tmp/godot.zip -d /tmp/godot
           sudo mv "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
           sudo chmod +x /usr/local/bin/godot
-          GODOT_FULL_VERSION=$(godot --version | head -1 | sed 's/\.official.*//')
+          GODOT_FULL_VERSION=$(godot --version | grep -oP '^Godot Engine v\K[^ ]+' | sed 's/\.official.*//')
           echo "Godot version: $GODOT_FULL_VERSION"
 
           curl -fsSL -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}"
           unzip -o /tmp/templates.tpz -d /tmp/godot-templates
           cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}/"
+          # 4.7.0.stable など patch-zero でも検索する可能性があるため symlink で保険をかける
+          if [ "${GODOT_FULL_VERSION}" != "${GODOT_VERSION}.0.${GODOT_STATUS}" ]; then
+            ln -sfn "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}" "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.0.${GODOT_STATUS}"
+          fi
+          ls "$HOME/.local/share/godot/export_templates/"
           ls "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}/" | head -20
 
       - name: Create build directory
@@ -49,7 +54,7 @@ jobs:
 
       - name: Export project
         run: |
-          godot --headless --path . --export-release "Web" build/web/index.html
+          godot --headless -v --path . --export-release "Web" build/web/index.html
 
       - name: Create .nojekyll file
         run: |
