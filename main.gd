@@ -110,11 +110,13 @@ func _process(delta):
 			spawn_cooldown = MIN_SPAWN_INTERVAL + randf() * SPAWN_INTERVAL_RANDOM
 
 		_check_collision()
+		if state == GameState.PLAYING:
+			update_ui()
 
 func _check_collision():
-	var player_rect := Rect2(player.position, player.size)
+	var player_rect := Rect2(player.position, Vector2(50, 50))
 	for child in get_children():
-		if child is Area2D and child.name.begins_with("Obstacle"):
+		if child is Area2D:
 			var obstacle_rect := Rect2(child.position - Vector2(20, 20), Vector2(40, 40))
 			if player_rect.intersects(obstacle_rect):
 				game_over()
@@ -122,7 +124,6 @@ func _check_collision():
 
 func spawn_obstacle():
 	var obstacle = preload("res://obstacle.tscn").instantiate()
-	obstacle.name = "Obstacle"
 	obstacle.position = Vector2(1200, 580) # 地面ライン上の障害物
 	obstacle.speed = game_speed
 	add_child(obstacle)
