@@ -1,4 +1,4 @@
-extends ColorRect
+extends Node2D
 
 @export var gravity = 500.0
 @export var jump_force = -300.0
@@ -11,7 +11,7 @@ var on_ground = true
 const FLOOR_Y = 550.0
 
 func reset():
-	position.y = FLOOR_Y
+	position = Vector2(100, FLOOR_Y)
 	velocity_y = 0
 	is_jumping = false
 	on_ground = true
