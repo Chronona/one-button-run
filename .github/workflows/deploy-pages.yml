@@ -82,7 +82,7 @@ jobs:
       - name: Export project
         run: |
           set -euo pipefail
-          godot --headless --path . --export-release "Web" build/web/index.html
+          godot --headless --path . --export-release "Web"
 
       - name: Create .nojekyll file
         run: |
