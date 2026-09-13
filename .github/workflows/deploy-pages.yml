@@ -24,18 +24,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Godot and templates
+      - name: Download Godot
         run: |
-          set -euo pipefail
           curl -fsSL --retry 3 --retry-delay 5 -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
+          ls -lh /tmp/godot.zip
+
+      - name: Extract Godot
+        run: |
           unzip -o /tmp/godot.zip -d /tmp/godot
+          ls -lh /tmp/godot/
+
+      - name: Install Godot binary
+        run: |
           sudo mv "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
           sudo chmod +x /usr/local/bin/godot
+          which godot
+          ls -lh /usr/local/bin/godot
+
+      - name: Check Godot version
+        run: |
           GODOT_FULL_VERSION=$(godot --headless --version | grep -oP '^Godot Engine v\K[^ ]+' | sed 's/\.official.*//')
           echo "Godot version: $GODOT_FULL_VERSION"
+          echo "GODOT_FULL_VERSION=$GODOT_FULL_VERSION" >> "$GITHUB_ENV"
 
+      - name: Download export templates
+        run: |
           curl -fsSL --retry 3 --retry-delay 5 -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
           echo "Downloaded templates.tpz size: $(stat -c%s /tmp/templates.tpz) bytes"
+
+      - name: Install export templates
+        run: |
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}"
           unzip -o /tmp/templates.tpz -d /tmp/godot-templates
           echo "Extracted template files:"
