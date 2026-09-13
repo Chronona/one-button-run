@@ -26,23 +26,29 @@ jobs:
 
       - name: Install Godot and templates
         run: |
-          curl -fsSL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
+          set -euo pipefail
+          curl -fsSL --retry 3 --retry-delay 5 -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
           unzip -o /tmp/godot.zip -d /tmp/godot
           sudo mv "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
           sudo chmod +x /usr/local/bin/godot
           GODOT_FULL_VERSION=$(godot --version | grep -oP '^Godot Engine v\K[^ ]+' | sed 's/\.official.*//')
           echo "Godot version: $GODOT_FULL_VERSION"
 
-          curl -fsSL -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
+          curl -fsSL --retry 3 --retry-delay 5 -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
+          echo "Downloaded templates.tpz size: $(stat -c%s /tmp/templates.tpz) bytes"
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}"
           unzip -o /tmp/templates.tpz -d /tmp/godot-templates
+          echo "Extracted template files:"
+          find /tmp/godot-templates/templates -maxdepth 1 -type f | head -30
           cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}/"
           # 4.7.0.stable など patch-zero でも検索する可能性があるため symlink で保険をかける
           if [ "${GODOT_FULL_VERSION}" != "${GODOT_VERSION}.0.${GODOT_STATUS}" ]; then
             ln -sfn "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}" "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.0.${GODOT_STATUS}"
           fi
+          echo "Installed templates:"
           ls "$HOME/.local/share/godot/export_templates/"
-          ls "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}/" | head -20
+          ls "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}/" | head -30
+          test -f "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}/web_nothreads_release.zip"
 
       - name: Create build directory
         run: |
