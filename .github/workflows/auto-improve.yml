@@ -33,14 +33,14 @@ jobs:
         uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           path: /usr/local/bin/godot
-          key: godot-4.4-stable-linux-x86_64
+          key: godot-4.7-stable-linux-x86_64
 
       - name: Install Godot
         if: steps.cache-godot.outputs.cache-hit != 'true'
         run: |
-          curl -fsSL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/4.4-stable/Godot_v4.4-stable_linux.x86_64.zip"
+          curl -fsSL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip"
           unzip -o /tmp/godot.zip -d /tmp/godot
-          sudo mv /tmp/godot/Godot_v4.4-stable_linux.x86_64 /usr/local/bin/godot
+          sudo mv /tmp/godot/Godot_v4.7-stable_linux.x86_64 /usr/local/bin/godot
           sudo chmod +x /usr/local/bin/godot
           rm -rf /tmp/godot /tmp/godot.zip
           godot --version

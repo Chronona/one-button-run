@@ -16,6 +16,8 @@ concurrency:
 env:
   GODOT_VERSION: 4.7
   GODOT_STATUS: stable
+  # Godot のエクスポートテンプレートはフルバージョン（major.minor.patch.status）のディレクトリを参照する
+  GODOT_TEMPLATE_VERSION: 4.7.0
 
 jobs:
   export:
@@ -33,10 +35,10 @@ jobs:
           godot --version
 
           curl -fsSL -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
-          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}"
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATE_VERSION}.${GODOT_STATUS}"
           unzip -o /tmp/templates.tpz -d /tmp/godot-templates
-          cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}/"
-          ls "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}/" | head -20
+          cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATE_VERSION}.${GODOT_STATUS}/"
+          ls "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATE_VERSION}.${GODOT_STATUS}/" | head -20
 
       - name: Create build directory
         run: |
