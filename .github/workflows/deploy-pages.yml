@@ -24,24 +24,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve Godot version and export templates
+      - name: Set up export templates
         run: |
           set -euo pipefail
-          # godot --version は "4.7.2.stable.official.ed1daf0bf" のような形式。
-          # エクスポートテンプレートのディレクトリ名は ".official" 以降を落とした部分と一致する。
-          version="$(godot --version | sed -E 's/\.(official|custom_build).*$//')"
-          templates_root="/root/.local/share/godot/export_templates"
-          echo "Godot: $version"
-          ls "$templates_root" || true
+          # イメージはテンプレートを /root 配下に置くが、Actions はコンテナの
+          # HOME を /github/home に差し替えるため Godot が見つけられない。
+          mkdir -p "$HOME/.local/share/godot"
+          ln -sfn /root/.local/share/godot/export_templates \
+            "$HOME/.local/share/godot/export_templates"
 
-          if [ ! -d "$templates_root/$version" ]; then
-            echo "::error::No export templates for $version in $templates_root"
-            exit 1
-          fi
+          # godot --version は "4.7.stable.official.5b4e0cb0f" のような形式で、
+          # ".official" 以降を落とした部分がテンプレートのディレクトリ名になる。
+          version="$(godot --version | sed -E 's/\.(official|custom_build).*$//')"
+          templates="$HOME/.local/share/godot/export_templates/$version"
+          echo "Godot: $version"
 
           # Web プリセットは thread_support=false のため web_nothreads_* を使う。
-          ls "$templates_root/$version" | grep '^web' || {
-            echo "::error::Web export templates are missing"
+          ls "$templates" | grep '^web_nothreads' || {
+            echo "::error::Web export templates are missing in $templates"
             exit 1
           }
 
