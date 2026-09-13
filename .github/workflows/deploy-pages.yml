@@ -26,16 +26,19 @@ jobs:
 
       - name: Download Godot
         run: |
+          set -euo pipefail
           curl -fsSL --retry 3 --retry-delay 5 -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64.zip"
           ls -lh /tmp/godot.zip
 
       - name: Extract Godot
         run: |
+          set -euo pipefail
           unzip -o /tmp/godot.zip -d /tmp/godot
           ls -lh /tmp/godot/
 
       - name: Install Godot binary
         run: |
+          set -euo pipefail
           sudo mv "/tmp/godot/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_linux.x86_64" /usr/local/bin/godot
           sudo chmod +x /usr/local/bin/godot
           which godot
@@ -43,17 +46,20 @@ jobs:
 
       - name: Check Godot version
         run: |
-          GODOT_FULL_VERSION=$(godot --headless --version | grep -oP '^Godot Engine v\K[^ ]+' | sed 's/\.official.*//')
+          set -euo pipefail
+          GODOT_FULL_VERSION=$(godot --headless --version | head -1 | sed -E 's/^Godot Engine v//; s/\.official.*//; s/ - .*//')
           echo "Godot version: $GODOT_FULL_VERSION"
           echo "GODOT_FULL_VERSION=$GODOT_FULL_VERSION" >> "$GITHUB_ENV"
 
       - name: Download export templates
         run: |
+          set -euo pipefail
           curl -fsSL --retry 3 --retry-delay 5 -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/Godot_v${GODOT_VERSION}-${GODOT_STATUS}_export_templates.tpz"
           echo "Downloaded templates.tpz size: $(stat -c%s /tmp/templates.tpz) bytes"
 
       - name: Install export templates
         run: |
+          set -euo pipefail
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_FULL_VERSION}"
           unzip -o /tmp/templates.tpz -d /tmp/godot-templates
           echo "Extracted template files:"
@@ -70,18 +76,22 @@ jobs:
 
       - name: Create build directory
         run: |
+          set -euo pipefail
           mkdir -p build/web
 
       - name: Import assets
         run: |
+          set -euo pipefail
           godot --headless --path . --import --quit
 
       - name: Export project
         run: |
+          set -euo pipefail
           godot --headless -v --path . --export-release "Web" build/web/index.html
 
       - name: Create .nojekyll file
         run: |
+          set -euo pipefail
           touch build/web/.nojekyll
 
       - name: Upload artifact
