@@ -3,23 +3,24 @@ extends Node2D
 signal jumped(pos: Vector2)
 signal landed(pos: Vector2)
 
-@export var gravity = 500.0
-@export var jump_force = -300.0
-@export var max_fall_speed = 1000.0
+@export var gravity: float = 500.0
+@export var jump_force: float = -300.0
+@export var max_fall_speed: float = 1000.0
 
-var velocity_y = 0.0
-var is_jumping = false
-var on_ground = true
+var velocity_y: float = 0.0
+var is_jumping: bool = false
+var on_ground: bool = true
 
-const FLOOR_Y = 550.0
+const FLOOR_Y := 550.0
+const JUMP_CUT_MULTIPLIER := 0.5
 
-func reset():
+func reset() -> void:
 	position = Vector2(100, FLOOR_Y)
-	velocity_y = 0
+	velocity_y = 0.0
 	is_jumping = false
 	on_ground = true
 
-func update(delta, _speed):
+func update(delta: float) -> void:
 	if Input.is_action_just_pressed("jump") and on_ground:
 		velocity_y = jump_force
 		is_jumping = true
@@ -28,7 +29,7 @@ func update(delta, _speed):
 
 	if Input.is_action_just_released("jump"):
 		if is_jumping:
-			velocity_y *= 0.5 # 短くジャンプ
+			velocity_y *= JUMP_CUT_MULTIPLIER # 短くジャンプ
 
 	# 重力適用
 	velocity_y += gravity * delta
@@ -45,6 +46,6 @@ func update(delta, _speed):
 		position.y = FLOOR_Y
 		on_ground = true
 		is_jumping = false
-		velocity_y = 0
+		velocity_y = 0.0
 		if was_airborne:
 			landed.emit(position + Vector2(25, 50))
