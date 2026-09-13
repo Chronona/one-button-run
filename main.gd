@@ -16,7 +16,7 @@ var state = GameState.START
 var score: float = 0.0
 var high_score: int = 0
 var game_speed = 200.0
-# スポーン間隔の保証用（秒）。最低間隔は速度に追従するので高速化しても詰まない
+# スポーン間隔の保証用（秒）。最低間隔は速度に追従するので高速化しても詰まらない
 const MIN_SPAWN_INTERVAL = 1.0
 const SPAWN_INTERVAL_RANDOM = 1.5
 var spawn_cooldown = 1.2
@@ -30,6 +30,9 @@ func _ready():
 
 	# UIの初期化
 	update_ui()
+	
+	player.jumped.connect(_on_player_jumped)
+	player.landed.connect(_on_player_landed)
 
 func _ensure_jump_action():
 	if not InputMap.has_action("jump"):
@@ -78,13 +81,30 @@ func start_game():
 	update_ui()
 	game_over_label.hide()
 
+func _on_player_jumped(pos: Vector2):
+	var jump_particles = get_node_or_null("JumpParticles")
+	if jump_particles != null:
+		jump_particles.position = pos
+		jump_particles.restart()
+		
+	var jump_se = get_node_or_null("JumpSE")
+	if jump_se != null:
+		jump_se.play()
+
+func _on_player_landed(pos: Vector2):
+	var land_particles = get_node_or_null("LandParticles")
+	if land_particles != null:
+		land_particles.position = pos
+		land_particles.restart()
+
 func game_over():
 	if state != GameState.PLAYING:
 		return
 	state = GameState.GAME_OVER
 
 	# ハイスコア更新チェック
-	if int(score) > high_score:
+	var is_record := int(score) > high_score
+	if is_record:
 		high_score = int(score)
 		var file = FileAccess.open("user://high_score.txt", FileAccess.WRITE)
 		if file != null:
@@ -92,6 +112,22 @@ func game_over():
 
 	update_ui()
 	game_over_label.show()
+	
+	# ゲームオーバー時の音とパーティクル
+	var crash_particles = get_node_or_null("CrashParticles")
+	if crash_particles != null:
+		crash_particles.position = player.position + Vector2(25, 25)
+		crash_particles.restart()
+	
+	var game_over_se = get_node_or_null("GameOverSE")
+	if game_over_se != null:
+		game_over_se.play()
+	
+	# 高スコア更新時の音
+	if is_record:
+		var highscore_se = get_node_or_null("HighScoreSE")
+		if highscore_se != null:
+			highscore_se.play()
 
 func _process(delta):
 	if state == GameState.PLAYING:
