@@ -26,14 +26,6 @@ godot .
 
 .\check.ps1 は、プロジェクトの問題点をチェックします。
 
-## 公開ロードマップ
-
-- GitHub Pagesでの公開
-- itch.ioへの公開
-- Steamでの公開
-
-このゲームは自作図形のみを使用しており、GoogleやChromeへの依存はありません。
-
 ## ライセンス
 
 MIT License
