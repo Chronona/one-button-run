@@ -3,23 +3,23 @@ extends Node2D
 signal jumped(pos: Vector2)
 signal landed(pos: Vector2)
 
-@export var gravity = 500.0
-@export var jump_force = -300.0
-@export var max_fall_speed = 1000.0
+@export var gravity: float = 500.0
+@export var jump_force: float = -300.0
+@export var max_fall_speed: float = 1000.0
 
-var velocity_y = 0.0
-var is_jumping = false
-var on_ground = true
+var velocity_y: float = 0.0
+var is_jumping: bool = false
+var on_ground: bool = true
 
-const FLOOR_Y = 550.0
+const FLOOR_Y: float = 550.0
 
-func reset():
+func reset() -> void:
 	position = Vector2(100, FLOOR_Y)
-	velocity_y = 0
+	velocity_y = 0.0
 	is_jumping = false
 	on_ground = true
 
-func update(delta, _speed):
+func update(delta: float) -> void:
 	if Input.is_action_just_pressed("jump") and on_ground:
 		velocity_y = jump_force
 		is_jumping = true

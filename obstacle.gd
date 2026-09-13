@@ -1,8 +1,8 @@
 extends Area2D
 
-@export var speed = 200.0
+@export var speed: float = 200.0
 
-func _process(delta):
+func _process(delta: float) -> void:
 	position.x -= speed * delta
 	
 	# 左端まで移動したら解放
