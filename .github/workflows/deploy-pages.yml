@@ -45,11 +45,18 @@ jobs:
             exit 1
           }
 
+      - name: Import assets
+        run: |
+          set -euo pipefail
+          # 初回インポートを先に完走させておかないと、エクスポート時の
+          # リソース検証が通らない。
+          godot --headless --path . --import
+
       - name: Export project
         run: |
           set -euo pipefail
           mkdir -p build/web
-          godot --headless --path . --export-release "Web"
+          godot --headless --path . --export-release "Web" build/web/index.html
 
       - name: Create .nojekyll file
         run: |
