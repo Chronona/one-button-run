@@ -4,6 +4,9 @@ extends Area2D
 
 const DESPAWN_X := -50.0
 
+func _ready() -> void:
+	add_to_group("obstacles")
+
 func _process(delta: float) -> void:
 	position.x -= speed * delta
 

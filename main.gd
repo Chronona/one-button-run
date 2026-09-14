@@ -19,6 +19,7 @@ var game_speed: float = 200.0
 # スポーン間隔の保証用（秒）。最低間隔は速度に追従するので高速化しても詰まらない
 const MIN_SPAWN_INTERVAL := 1.0
 const SPAWN_INTERVAL_RANDOM := 1.5
+const MIN_GAP_PIXELS := 350.0
 const BASE_SPEED := 200.0
 const SPEED_PER_SECOND := 5.0
 const MAX_SPEED := 600.0
@@ -45,21 +46,21 @@ func _ready() -> void:
 func _ensure_jump_action() -> void:
 	if not InputMap.has_action("jump"):
 		InputMap.add_action("jump")
-	var key_space := InputEventKey.new()
-	key_space.physical_keycode = KEY_SPACE
-	if not InputMap.action_has_event("jump", key_space):
-		InputMap.action_add_event("jump", key_space)
-	var key_up := InputEventKey.new()
-	key_up.physical_keycode = KEY_UP
-	if not InputMap.action_has_event("jump", key_up):
-		InputMap.action_add_event("jump", key_up)
-	var mb := InputEventMouseButton.new()
-	mb.button_index = MOUSE_BUTTON_LEFT
-	if not InputMap.action_has_event("jump", mb):
-		InputMap.action_add_event("jump", mb)
-	var touch := InputEventScreenTouch.new()
-	if not InputMap.action_has_event("jump", touch):
-		InputMap.action_add_event("jump", touch)
+	var space_key := InputEventKey.new()
+	space_key.physical_keycode = KEY_SPACE
+	if not InputMap.action_has_event("jump", space_key):
+		InputMap.action_add_event("jump", space_key)
+	var up_key := InputEventKey.new()
+	up_key.physical_keycode = KEY_UP
+	if not InputMap.action_has_event("jump", up_key):
+		InputMap.action_add_event("jump", up_key)
+	var mouse_button := InputEventMouseButton.new()
+	mouse_button.button_index = MOUSE_BUTTON_LEFT
+	if not InputMap.action_has_event("jump", mouse_button):
+		InputMap.action_add_event("jump", mouse_button)
+	var touch_event := InputEventScreenTouch.new()
+	if not InputMap.action_has_event("jump", touch_event):
+		InputMap.action_add_event("jump", touch_event)
 
 func _is_jump_pressed(event: InputEvent) -> bool:
 	if event.is_action_pressed("jump"):
@@ -76,10 +77,10 @@ func update_ui() -> void:
 	score_label.text = "Score: %d" % int(score)
 	high_score_label.text = "High Score: %d" % high_score
 
-func _play_se(se_name: String) -> void:
-	var se = get_node_or_null(se_name)
-	if se != null and se.has_method("play"):
-		se.play()
+func _play_se(sound_name: String) -> void:
+	var sound_player = get_node_or_null(sound_name)
+	if sound_player != null and sound_player.has_method("play"):
+		sound_player.play()
 
 func _play_feedback(particles_name: String, se_name: String, pos: Vector2) -> void:
 	var particles = get_node_or_null(particles_name)
@@ -93,10 +94,9 @@ func start_game() -> void:
 	score = 0.0
 	game_speed = BASE_SPEED
 	spawn_cooldown = INITIAL_SPAWN_COOLDOWN # 開始直後の猶予
-	# 残っている障害物を掃除
-	for child in get_children():
-		if child is Area2D:
-			child.queue_free()
+	# 残っている障害物を掃除（グループで確実に取得）
+	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):
+		obstacle_node.queue_free()
 	player.reset()
 	update_ui()
 	game_over_label.hide()
@@ -148,7 +148,8 @@ func _process(delta: float) -> void:
 		spawn_cooldown -= delta
 		if spawn_cooldown <= 0.0:
 			spawn_obstacle()
-			spawn_cooldown = MIN_SPAWN_INTERVAL + randf() * SPAWN_INTERVAL_RANDOM
+			var base_interval := maxf(MIN_SPAWN_INTERVAL, MIN_GAP_PIXELS / game_speed)
+			spawn_cooldown = base_interval + randf() * SPAWN_INTERVAL_RANDOM
 
 		_check_collision()
 		if state == GameState.PLAYING:
@@ -156,18 +157,18 @@ func _process(delta: float) -> void:
 
 func _check_collision() -> void:
 	var player_rect := Rect2(player.position, Vector2(50, 50))
-	for child in get_children():
-		if child is Area2D:
-			var obstacle_rect := Rect2(child.position - Vector2(20, 20), Vector2(40, 40))
-			if player_rect.intersects(obstacle_rect):
-				game_over()
-				break
+	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):
+		var obstacle_pos := (obstacle_node as Node2D).position
+		var obstacle_rect := Rect2(obstacle_pos - Vector2(20, 20), Vector2(40, 40))
+		if player_rect.intersects(obstacle_rect):
+			game_over()
+			break
 
 func spawn_obstacle() -> void:
-	var obstacle = OBSTACLE_SCENE.instantiate()
-	obstacle.position = OBSTACLE_SPAWN_POS # 地面ライン上の障害物
-	obstacle.speed = game_speed
-	add_child(obstacle)
+	var obstacle_node = OBSTACLE_SCENE.instantiate()
+	obstacle_node.position = OBSTACLE_SPAWN_POS # 地面ライン上の障害物
+	obstacle_node.set("speed", game_speed)
+	add_child(obstacle_node)
 
 func _input(event: InputEvent) -> void:
 	if state != GameState.PLAYING and _is_jump_pressed(event):
