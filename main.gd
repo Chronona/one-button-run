@@ -25,7 +25,7 @@ const MAX_SPEED := 600.0
 const INITIAL_SPAWN_COOLDOWN := 1.2
 const OBSTACLE_SCENE: PackedScene = preload("res://obstacle.tscn")
 const OBSTACLE_SPAWN_POS := Vector2(1200, 580)
-var spawn_cooldown: float = 1.2
+var spawn_cooldown: float = INITIAL_SPAWN_COOLDOWN
 
 func _ready() -> void:
 	_ensure_jump_action()
@@ -76,14 +76,17 @@ func update_ui() -> void:
 	score_label.text = "Score: %d" % int(score)
 	high_score_label.text = "High Score: %d" % high_score
 
+func _play_se(se_name: String) -> void:
+	var se = get_node_or_null(se_name)
+	if se != null and se.has_method("play"):
+		se.play()
+
 func _play_feedback(particles_name: String, se_name: String, pos: Vector2) -> void:
 	var particles = get_node_or_null(particles_name)
 	if particles != null and particles.has_method("restart"):
 		particles.position = pos
 		particles.restart()
-	var se = get_node_or_null(se_name)
-	if se != null and se.has_method("play"):
-		se.play()
+	_play_se(se_name)
 
 func start_game() -> void:
 	state = GameState.PLAYING
@@ -129,9 +132,7 @@ func game_over() -> void:
 
 	# 高スコア更新時の音
 	if is_record:
-		var highscore_se = get_node_or_null("HighScoreSE")
-		if highscore_se != null and highscore_se.has_method("play"):
-			highscore_se.play()
+		_play_se("HighScoreSE")
 
 func _process(delta: float) -> void:
 	if state == GameState.PLAYING:

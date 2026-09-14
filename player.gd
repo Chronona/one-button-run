@@ -28,8 +28,8 @@ func update(delta: float) -> void:
 		jumped.emit(position + Vector2(25, 50))
 
 	if Input.is_action_just_released("jump"):
-		if is_jumping:
-			velocity_y *= JUMP_CUT_MULTIPLIER # 短くジャンプ
+		if is_jumping and velocity_y < 0.0:
+			velocity_y *= JUMP_CUT_MULTIPLIER # 上昇中のみ短くジャンプ
 
 	# 重力適用
 	velocity_y += gravity * delta
