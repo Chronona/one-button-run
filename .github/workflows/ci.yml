@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: L0 契約テスト
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.7
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Import assets
+        run: |
+          set -euo pipefail
+          # 初回インポートを先に完走させておかないと、リソースの解決が通らない。
+          godot --headless --path . --import
+
+      - name: L0 契約テスト
+        run: |
+          set -euo pipefail
+          chmod +x scripts/test.sh
+          bash scripts/test.sh
+
+      - name: 静的チェック（構文・起動・インデント）
+        run: |
+          set -euo pipefail
+          chmod +x scripts/check.sh
+          bash scripts/check.sh
+
+      - name: Web エクスポートが通ることを確認
+        run: |
+          set -euo pipefail
+          # deploy-pages.yml と同じ手順。main にマージしてから公開が壊れていた、を防ぐ。
+          mkdir -p "$HOME/.local/share/godot"
+          ln -sfn /root/.local/share/godot/export_templates \
+            "$HOME/.local/share/godot/export_templates"
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+          test -s build/web/index.html
+
+  guard:
+    name: 契約テスト改変ガード
+    # 自動改善フローの PR だけを対象にする。人間は契約そのものを変更してよい。
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'opencode/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 契約テストと実行基盤が変更されていないこと
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          changed="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")"
+          echo "変更ファイル:"
+          echo "$changed"
+          protected="$(echo "$changed" | grep -E '^(tests/(contract|support|run_tests\.gd)|\.github/workflows/)' || true)"
+          if [ -n "$protected" ]; then
+            echo "::error::自動改善フローは契約テストと CI 定義を変更できません:"
+            echo "$protected"
+            exit 1
+          fi
+          echo "OK: 保護対象への変更はありません。"
