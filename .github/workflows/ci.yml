@@ -25,6 +25,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up export templates
+        run: |
+          set -euo pipefail
+          # イメージはテンプレートを /root 配下に置くが、Actions はコンテナの
+          # HOME を /github/home に差し替えるため Godot が見つけられない。
+          # godot を一度でも起動すると HOME 配下に export_templates が実ディレクトリ
+          # として作られ、ln がその中にリンクを入れ子にしてしまう。順序に依存しない
+          # よう、張り直す前に必ず消す。
+          rm -rf "$HOME/.local/share/godot/export_templates"
+          mkdir -p "$HOME/.local/share/godot"
+          ln -sfn /root/.local/share/godot/export_templates \
+            "$HOME/.local/share/godot/export_templates"
+
+          # godot --version は "4.7.stable.official.5b4e0cb0f" のような形式で、
+          # ".official" 以降を落とした部分がテンプレートのディレクトリ名になる。
+          version="$(godot --version | sed -E 's/\.(official|custom_build).*$//')"
+          templates="$HOME/.local/share/godot/export_templates/$version"
+          echo "Godot: $version"
+
+          # Web プリセットは thread_support=false のため web_nothreads_* を使う。
+          ls "$templates" | grep '^web_nothreads' || {
+            echo "::error::Web export templates are missing in $templates"
+            exit 1
+          }
+
       - name: Import assets
         run: |
           set -euo pipefail
@@ -47,9 +72,6 @@ jobs:
         run: |
           set -euo pipefail
           # deploy-pages.yml と同じ手順。main にマージしてから公開が壊れていた、を防ぐ。
-          mkdir -p "$HOME/.local/share/godot"
-          ln -sfn /root/.local/share/godot/export_templates \
-            "$HOME/.local/share/godot/export_templates"
           mkdir -p build/web
           godot --headless --path . --export-release "Web" build/web/index.html
           test -s build/web/index.html
