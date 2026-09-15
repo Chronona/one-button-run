@@ -48,19 +48,19 @@ func _ensure_jump_action() -> void:
 		InputMap.add_action("jump")
 	var space_key := InputEventKey.new()
 	space_key.physical_keycode = KEY_SPACE
-	if not InputMap.action_has_event("jump", space_key):
-		InputMap.action_add_event("jump", space_key)
+	_register_jump_event(space_key)
 	var up_key := InputEventKey.new()
 	up_key.physical_keycode = KEY_UP
-	if not InputMap.action_has_event("jump", up_key):
-		InputMap.action_add_event("jump", up_key)
+	_register_jump_event(up_key)
 	var mouse_button := InputEventMouseButton.new()
 	mouse_button.button_index = MOUSE_BUTTON_LEFT
-	if not InputMap.action_has_event("jump", mouse_button):
-		InputMap.action_add_event("jump", mouse_button)
+	_register_jump_event(mouse_button)
 	var touch_event := InputEventScreenTouch.new()
-	if not InputMap.action_has_event("jump", touch_event):
-		InputMap.action_add_event("jump", touch_event)
+	_register_jump_event(touch_event)
+
+func _register_jump_event(event: InputEvent) -> void:
+	if not InputMap.action_has_event("jump", event):
+		InputMap.action_add_event("jump", event)
 
 func _is_jump_pressed(event: InputEvent) -> bool:
 	if event.is_action_pressed("jump"):
@@ -158,6 +158,8 @@ func _process(delta: float) -> void:
 func _check_collision() -> void:
 	var player_rect := Rect2(player.position, Vector2(50, 50))
 	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):
+		if not (obstacle_node is Node2D):
+			continue
 		var obstacle_pos := (obstacle_node as Node2D).position
 		var obstacle_rect := Rect2(obstacle_pos - Vector2(20, 20), Vector2(40, 40))
 		if player_rect.intersects(obstacle_rect):
@@ -165,7 +167,9 @@ func _check_collision() -> void:
 			break
 
 func spawn_obstacle() -> void:
-	var obstacle_node = OBSTACLE_SCENE.instantiate()
+	var obstacle_node := OBSTACLE_SCENE.instantiate() as Node2D
+	if obstacle_node == null:
+		return
 	obstacle_node.position = OBSTACLE_SPAWN_POS # 地面ライン上の障害物
 	obstacle_node.set("speed", game_speed)
 	add_child(obstacle_node)
