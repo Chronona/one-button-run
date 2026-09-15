@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: L0 契約テスト
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.7
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up export templates
+        run: |
+          set -euo pipefail
+          # イメージはテンプレートを /root 配下に置くが、Actions はコンテナの
+          # HOME を /github/home に差し替えるため Godot が見つけられない。
+          # godot を一度でも起動すると HOME 配下に export_templates が実ディレクトリ
+          # として作られ、ln がその中にリンクを入れ子にしてしまう。順序に依存しない
+          # よう、張り直す前に必ず消す。
+          rm -rf "$HOME/.local/share/godot/export_templates"
+          mkdir -p "$HOME/.local/share/godot"
+          ln -sfn /root/.local/share/godot/export_templates \
+            "$HOME/.local/share/godot/export_templates"
+
+          # godot --version は "4.7.stable.official.5b4e0cb0f" のような形式で、
+          # ".official" 以降を落とした部分がテンプレートのディレクトリ名になる。
+          version="$(godot --version | sed -E 's/\.(official|custom_build).*$//')"
+          templates="$HOME/.local/share/godot/export_templates/$version"
+          echo "Godot: $version"
+
+          # Web プリセットは thread_support=false のため web_nothreads_* を使う。
+          ls "$templates" | grep '^web_nothreads' || {
+            echo "::error::Web export templates are missing in $templates"
+            exit 1
+          }
+
+      - name: Import assets
+        run: |
+          set -euo pipefail
+          # 初回インポートを先に完走させておかないと、リソースの解決が通らない。
+          godot --headless --path . --import
+
+      - name: L0 契約テスト
+        run: |
+          set -euo pipefail
+          chmod +x scripts/test.sh
+          bash scripts/test.sh
+
+      - name: 静的チェック（構文・起動・インデント）
+        run: |
+          set -euo pipefail
+          chmod +x scripts/check.sh
+          bash scripts/check.sh
+
+      - name: Web エクスポートが通ることを確認
+        run: |
+          set -euo pipefail
+          # deploy-pages.yml と同じ手順。main にマージしてから公開が壊れていた、を防ぐ。
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+          test -s build/web/index.html
+
+  guard:
+    name: 契約テスト改変ガード
+    # 自動改善フローの PR だけを対象にする。人間は契約そのものを変更してよい。
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'opencode/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 契約テストと実行基盤が変更されていないこと
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          changed="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")"
+          echo "変更ファイル:"
+          echo "$changed"
+          protected="$(echo "$changed" | grep -E '^(tests/(contract|support|run_tests\.gd)|\.github/workflows/)' || true)"
+          if [ -n "$protected" ]; then
+            echo "::error::自動改善フローは契約テストと CI 定義を変更できません:"
+            echo "$protected"
+            exit 1
+          fi
+          echo "OK: 保護対象への変更はありません。"

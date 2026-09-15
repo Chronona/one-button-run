@@ -66,10 +66,25 @@ jobs:
           prompt: |
             You are the build agent for the Godot 4 game "One Button Run" in this repository.
 
-            1. Run `bash scripts/check.sh` to see the current project state.
+            1. Run `bash scripts/check.sh` to see the current project state. It runs the
+               static checks and the L0 contract tests (`scripts/test.sh`). Both must be
+               green before you start and after you finish.
             2. Fix any Godot script errors or warnings in main.gd, player.gd, or obstacle.gd.
-            3. Make one small, safe improvement: refactor duplicated code, improve variable naming, add a minor gameplay tweak, or improve UI/UX feedback. Do not rewrite the whole game or change its core one-button mechanic.
-            4. Run the check again to confirm no new errors were introduced.
-            5. Finish; the CI will publish your changes as a pull request. The pull request title and description must be written in Japanese.
+            3. Make one small, safe improvement: refactor duplicated code, improve variable
+               naming, add a minor gameplay tweak, or improve UI/UX feedback. Do not rewrite
+               the whole game or change its core one-button mechanic.
+            4. Run `bash scripts/check.sh` again. Every contract test must still pass.
+            5. Finish; the CI will publish your changes as a pull request. The pull request
+               title and description must be written in Japanese.
+
+            Boundaries you must not cross:
+            - Never edit `tests/contract/**`, `tests/support/**`, `tests/run_tests.gd`, or
+              `.github/workflows/**`. These encode the promise that the game stays playable
+              with one button (tap), and CI rejects pull requests that change them.
+            - If a contract test fails, fix the game so the contract holds again. Never
+              weaken, skip, or delete a test to get to green.
+            - `tests/spec/active.spec.json` holds the tunable thresholds. Adjusting a value
+              there is allowed only when the game genuinely changed for the better; say so
+              explicitly in the pull request description.
           use-github-token: true
           timeout-minutes: 30
