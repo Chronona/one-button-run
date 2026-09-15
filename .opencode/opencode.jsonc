@@ -1,4 +1,5 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "preset": "muse-spark-free",
   "presets": {
     "muse-spark-free": {
