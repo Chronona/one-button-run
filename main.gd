@@ -26,6 +26,7 @@ const MAX_SPEED := 600.0
 const INITIAL_SPAWN_COOLDOWN := 1.2
 const OBSTACLE_SCENE: PackedScene = preload("res://obstacle.tscn")
 const OBSTACLE_SPAWN_POS := Vector2(1200, 580)
+const JUMP_ACTION := "jump"
 var spawn_cooldown: float = INITIAL_SPAWN_COOLDOWN
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func _ready() -> void:
 	var save_file := FileAccess.open("user://high_score.txt", FileAccess.READ)
 	if save_file != null:
 		high_score = save_file.get_as_text().to_int()
+		save_file.close()
 
 	# UIの初期化（スタート時の操作ヒントを表示）
 	update_ui()
@@ -44,26 +46,26 @@ func _ready() -> void:
 	player.landed.connect(_on_player_landed)
 
 func _ensure_jump_action() -> void:
-	if not InputMap.has_action("jump"):
-		InputMap.add_action("jump")
-	var space_key := InputEventKey.new()
-	space_key.physical_keycode = KEY_SPACE
-	if not InputMap.action_has_event("jump", space_key):
-		InputMap.action_add_event("jump", space_key)
-	var up_key := InputEventKey.new()
-	up_key.physical_keycode = KEY_UP
-	if not InputMap.action_has_event("jump", up_key):
-		InputMap.action_add_event("jump", up_key)
+	if not InputMap.has_action(JUMP_ACTION):
+		InputMap.add_action(JUMP_ACTION)
+	_add_jump_event(_make_key_event(KEY_SPACE))
+	_add_jump_event(_make_key_event(KEY_UP))
 	var mouse_button := InputEventMouseButton.new()
 	mouse_button.button_index = MOUSE_BUTTON_LEFT
-	if not InputMap.action_has_event("jump", mouse_button):
-		InputMap.action_add_event("jump", mouse_button)
-	var touch_event := InputEventScreenTouch.new()
-	if not InputMap.action_has_event("jump", touch_event):
-		InputMap.action_add_event("jump", touch_event)
+	_add_jump_event(mouse_button)
+	_add_jump_event(InputEventScreenTouch.new())
+
+func _make_key_event(keycode: Key) -> InputEventKey:
+	var key_event := InputEventKey.new()
+	key_event.physical_keycode = keycode
+	return key_event
+
+func _add_jump_event(event: InputEvent) -> void:
+	if not InputMap.action_has_event(JUMP_ACTION, event):
+		InputMap.action_add_event(JUMP_ACTION, event)
 
 func _is_jump_pressed(event: InputEvent) -> bool:
-	if event.is_action_pressed("jump"):
+	if event.is_action_pressed(JUMP_ACTION):
 		return true
 	if event is InputEventKey and event.pressed and not event.echo:
 		return event.physical_keycode == KEY_SPACE or event.physical_keycode == KEY_UP
@@ -119,6 +121,7 @@ func game_over() -> void:
 		var save_file := FileAccess.open("user://high_score.txt", FileAccess.WRITE)
 		if save_file != null:
 			save_file.store_string(str(high_score))
+			save_file.close()
 
 	update_ui()
 	if is_record:
@@ -158,6 +161,8 @@ func _process(delta: float) -> void:
 func _check_collision() -> void:
 	var player_rect := Rect2(player.position, Vector2(50, 50))
 	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):
+		if not (obstacle_node is Node2D):
+			continue
 		var obstacle_pos := (obstacle_node as Node2D).position
 		var obstacle_rect := Rect2(obstacle_pos - Vector2(20, 20), Vector2(40, 40))
 		if player_rect.intersects(obstacle_rect):
@@ -166,8 +171,9 @@ func _check_collision() -> void:
 
 func spawn_obstacle() -> void:
 	var obstacle_node = OBSTACLE_SCENE.instantiate()
-	obstacle_node.position = OBSTACLE_SPAWN_POS # 地面ライン上の障害物
-	obstacle_node.set("speed", game_speed)
+	(obstacle_node as Node2D).position = OBSTACLE_SPAWN_POS # 地面ライン上の障害物
+	if "speed" in obstacle_node:
+		obstacle_node.set("speed", game_speed)
 	add_child(obstacle_node)
 
 func _input(event: InputEvent) -> void:
