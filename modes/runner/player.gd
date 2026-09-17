@@ -15,6 +15,9 @@ const FLOOR_Y := 550.0
 const START_X := 100.0
 const JUMP_CUT_MULTIPLIER := 0.5
 const BODY_SIZE := Vector2(50, 50)
+# ジャンプ・着地エフェクトの発生位置（プレイヤー矩形の足元中央）。
+# jumped / landed の両シグナルで同じ値を使うため、重複リテラルにしない。
+const FEEDBACK_OFFSET := Vector2(25, 50)
 
 func reset() -> void:
 	position = Vector2(START_X, FLOOR_Y)
@@ -49,7 +52,7 @@ func update(delta: float, act_pressed: bool, act_released: bool) -> void:
 		is_jumping = false
 		velocity_y = 0.0
 		if was_airborne:
-			landed.emit(position + Vector2(25, 50))
+			landed.emit(position + FEEDBACK_OFFSET)
 
 func _try_jump() -> void:
 	if not on_ground:
@@ -57,7 +60,7 @@ func _try_jump() -> void:
 	velocity_y = jump_force
 	is_jumping = true
 	on_ground = false
-	jumped.emit(position + Vector2(25, 50))
+	jumped.emit(position + FEEDBACK_OFFSET)
 
 func _cut_jump() -> void:
 	if is_jumping and velocity_y < 0.0:
