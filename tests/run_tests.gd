@@ -8,19 +8,13 @@ extends SceneTree
 const CONTRACT_DIR := "res://tests/contract"
 const REGISTRY_PATH := "res://modes/registry.json"
 const REPORTER := preload("res://tests/support/reporter.gd")
+const REGISTRY_CONTRACT := "res://tests/contract/test_mode_registry.gd"
 
 func _initialize() -> void:
 	# root は _initialize の時点ではまだツリーに入っておらず、追加した子の _ready が
 	# 走らない。1フレーム待ってからテストを始める。
 	await process_frame
 
-	var spec := _load_spec()
-	if spec.is_empty():
-		printerr("FATAL: 有効なモードの spec を読み込めない (%s)" % REGISTRY_PATH)
-		quit(1)
-		return
-
-	print("== L0 契約テスト (mode=%s)" % spec.get("id", "?"))
 	var reporter = REPORTER.new()
 	var scripts := _contract_scripts()
 	if scripts.is_empty():
@@ -28,14 +22,31 @@ func _initialize() -> void:
 		quit(1)
 		return
 
-	for path in scripts:
-		var before: int = reporter.failures.size()
-		reporter.begin_suite(path.get_file())
-		var test_script: GDScript = load(path)
-		test_script.new().run(reporter, self, spec)
-		var added: int = reporter.failures.size() - before
-		print("  %s %s" % ["FAIL" if added > 0 else "ok  ", path.get_file()])
+	var spec := _load_spec()
+	if spec.is_empty():
+		# spec が引けない原因はほぼ registry の不整合なので、他のテストを走らせて
+		# 二次被害の失敗を並べるより、レジストリ契約だけを回して原因を名指しする。
+		print("== L0 契約テスト (有効なモードの spec を解決できない)")
+		_run_one(reporter, REGISTRY_CONTRACT, {})
+		_report(reporter)
+		return
 
+	print("== L0 契約テスト (mode=%s)" % spec.get("id", "?"))
+
+	for path in scripts:
+		_run_one(reporter, path, spec)
+
+	_report(reporter)
+
+func _run_one(reporter: RefCounted, path: String, spec: Dictionary) -> void:
+	var before: int = reporter.failures.size()
+	reporter.begin_suite(path.get_file())
+	var test_script: GDScript = load(path)
+	test_script.new().run(reporter, self, spec)
+	var added: int = reporter.failures.size() - before
+	print("  %s %s" % ["FAIL" if added > 0 else "ok  ", path.get_file()])
+
+func _report(reporter: RefCounted) -> void:
 	print("")
 	if reporter.failures.is_empty():
 		print("== 全 %d 件の契約を満たしています" % reporter.passed)

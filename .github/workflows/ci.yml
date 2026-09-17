@@ -78,7 +78,8 @@ jobs:
 
   guard:
     name: 契約テスト改変ガード
-    # 自動改善フローの PR だけを対象にする。人間は契約そのものを変更してよい。
+    # 自動フロー（日次の auto-improve と週次の weekly-update）の PR だけを対象にする。
+    # 人間は契約そのものを変更してよい。
     if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'opencode/')
     runs-on: ubuntu-latest
     steps:
@@ -94,7 +95,7 @@ jobs:
           changed="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")"
           echo "変更ファイル:"
           echo "$changed"
-          protected="$(echo "$changed" | grep -E '^(core/|tests/(contract|support|run_tests\.gd)|\.github/workflows/)' || true)"
+          protected="$(echo "$changed" | grep -E '^(core/|tests/|\.github/workflows/)' || true)"
           if [ -n "$protected" ]; then
             echo "::error::自動改善フローは core・契約テスト・CI 定義を変更できません（ゲームプレイの変更は modes/ 配下で行ってください）:"
             echo "$protected"
