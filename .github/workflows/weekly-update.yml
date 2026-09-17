@@ -1,0 +1,139 @@
+name: Weekly Large Update
+
+on:
+  schedule:
+    # 毎週月曜 07:00 JST（日曜 UTC 22:00）。日次フロー（UTC 21:00）と1時間ずらす。
+    - cron: '0 22 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: weekly-update
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
+        with:
+          path: /usr/local/bin/godot
+          key: godot-4.7-stable-linux-x86_64
+
+      - name: Install Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip"
+          unzip -o /tmp/godot.zip -d /tmp/godot
+          sudo mv /tmp/godot/Godot_v4.7-stable_linux.x86_64 /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+          rm -rf /tmp/godot /tmp/godot.zip
+          godot --version
+
+      - name: Make scripts executable
+        run: chmod +x scripts/check.sh scripts/test.sh
+
+      - name: Set OpenCode free model config
+        run: |
+          {
+            echo "OPENCODE_CONFIG_CONTENT<<EOF"
+            cat .opencode/opencode.jsonc
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Run OpenCode weekly update
+        uses: dceoy/opencode-action@0ff64486494c3134c46df6ce0e51eda4a64e349f # v0.7.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: opencode/muse-spark-1.3-contributor-free
+          agent: build
+          prompt: |
+            You are the weekly update agent for the Godot 4 game "One Button Run".
+            Your job is to ship ONE large update: a new game mode, in a new genre,
+            that is still played with a single tap.
+
+            Read `docs/adr/0002-core-modes-split.md` first. It describes the
+            architecture you must work within. Then run `bash scripts/check.sh` to
+            confirm the repository starts from a green state.
+
+            ## What to build
+
+            Add a NEW mode under `modes/<id>/` where `<id>` is a short lowercase
+            identifier for the genre (e.g. `flappy`, `rhythm`, `dodger`). It needs
+            exactly four things:
+
+            1. `modes/<id>/<id>_mode.gd` — `extends "res://core/game_mode.gd"`.
+               Implement `mode_start()`, `mode_tick(delta, act_pressed, act_released)`,
+               `is_failed()`, `get_difficulty()`, `get_feedback_map()` and
+               `get_fail_position()`. Read `modes/runner/runner_mode.gd` as the
+               reference implementation.
+            2. `modes/<id>/<id>.tscn` — the mode's scene, with the mode script on the
+               root node. It owns its own visuals, particles and AudioStreamPlayer
+               nodes, because the host knows nothing about how the game looks or sounds.
+            3. `modes/<id>/spec.json` — the contract values for this genre. Copy the
+               key set from `modes/runner/spec.json`; every key there is required.
+               `input_isolated_scripts` must list your new mode's scripts.
+            4. `modes/<id>/bot.gd` — a reference bot exposing
+               `decide(main, harness)`, which calls `harness.press()` or
+               `harness.release()`. It must be able to survive
+               `bot_min_survival_seconds` in your mode. If you cannot write a bot that
+               survives, the mode is probably unfair to humans too: simplify the mode
+               rather than lowering the threshold.
+
+            Then register it in `modes/registry.json`: add an entry under `modes` and
+            set `active` to your new id.
+
+            ## Rules
+
+            - The game must stay playable with ONE action. The architecture enforces
+              this: your mode receives input only as the `act_pressed` / `act_released`
+              arguments of `mode_tick`. Never add an InputMap action, never write
+              `_input`, `_unhandled_input`, `_process` or `_physics_process` in a mode,
+              and never reference the `Input` singleton. The genre difference must come
+              from what a tap MEANS, not from adding a second control.
+            - Never edit `core/**`, `tests/**` or `.github/**`. CI rejects pull
+              requests from this workflow that change them.
+            - Never delete or modify an existing mode under `modes/`. Old modes are
+              kept so that a failed update can be rolled back by setting `active` back
+              to the previous id.
+            - Do not add binary assets; you cannot author art or audio. Vary the look
+              and feel with what you can write: colors and `modulate`, `Polygon2D` and
+              `ColorRect` shapes, particle parameters, and the existing sounds under
+              `assets/se/` at different `volume_db` and `pitch_scale`.
+            - Run `bash scripts/check.sh` and iterate until every contract test passes.
+              The contract tests are what decide whether your mode is shippable: they
+              check that one action drives the whole state cycle, that doing nothing
+              always kills the player, that your bot survives, that failure and record
+              have visible and audible feedback, and that the Web export still builds.
+              Never weaken a test or a threshold to get to green.
+
+            ## Finishing
+
+            The CI will publish your changes as a pull request. Write the title and
+            description in Japanese, and include:
+
+            - the genre, and what a single tap does in it
+            - how difficulty scales, and what the failure condition is
+            - the strategy your bot uses, and how long it survived
+            - the exact one-line change needed to roll back (which `active` value to
+              restore)
+
+            A human reviews and merges this pull request. Do not merge it yourself.
+          use-github-token: true
+          timeout-minutes: 60

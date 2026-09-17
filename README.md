@@ -56,6 +56,20 @@ godot --headless --path . --script res://tests/run_tests.gd
 ゲームモードは `core/game_mode.gd` のインターフェースを実装します。時間も入力もホストから
 注入されるため、モードは `_process` も `_input` も持ちません。
 
+## 自動更新フロー
+
+| ワークフロー | 実行 | 内容 |
+| --- | --- | --- |
+| `auto-improve.yml` | 毎日 06:00 JST | 小さな安全な改善を1件。射程は `modes/` 配下 |
+| `weekly-update.yml` | 毎週月曜 07:00 JST | 新しいジャンルのモードを追加し、`registry.json` の `active` を切り替える |
+| `ci.yml` | PR ごと | L0 契約テスト、静的チェック、Web エクスポートの実走 |
+
+どちらの自動フローも `core/`・`tests/`・`.github/workflows/` を変更できません（CI の
+`guard` ジョブが落とします）。生成された PR は人間がレビューしてマージします。
+
+週次更新が不調だった場合は、`modes/registry.json` の `active` を前のモード ID に戻せば
+巻き戻せます。旧モードは削除されません。
+
 ## ライセンス
 
 MIT License
