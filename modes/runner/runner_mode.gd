@@ -49,8 +49,13 @@ func get_difficulty() -> float:
 func is_failed() -> bool:
 	return _failed
 
-func get_fail_position() -> Vector2:
-	return player.position + Vector2(25, 25)
+# act / land は足元、fail / record は機体の中心寄りに出す。
+const FAIL_FEEDBACK_OFFSET := Vector2(25, 25)
+
+func get_feedback_position(event_name: String) -> Vector2:
+	if event_name == "act" or event_name == "land":
+		return player.position + player.FEEDBACK_OFFSET
+	return player.position + FAIL_FEEDBACK_OFFSET
 
 func get_player() -> Node2D:
 	return player
@@ -83,11 +88,11 @@ func mode_tick(delta: float, act_pressed: bool, act_released: bool) -> void:
 
 	_check_collision()
 
-func _on_player_jumped(pos: Vector2) -> void:
-	host.emit_feedback("act", pos)
+func _on_player_jumped() -> void:
+	host.emit_feedback("act")
 
-func _on_player_landed(pos: Vector2) -> void:
-	host.emit_feedback("land", pos)
+func _on_player_landed() -> void:
+	host.emit_feedback("land")
 
 func _advance_obstacles(delta: float) -> void:
 	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):

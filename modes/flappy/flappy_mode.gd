@@ -57,7 +57,7 @@ func get_difficulty() -> float:
 func is_failed() -> bool:
 	return _failed
 
-func get_fail_position() -> Vector2:
+func get_feedback_position(_event_name: String) -> Vector2:
 	return player_pos + FEEDBACK_OFFSET
 
 func get_player() -> Node:
@@ -84,7 +84,7 @@ func mode_tick(delta: float, act_pressed: bool, act_released: bool) -> void:
 
 	if act_pressed and not _failed:
 		velocity_y = FLAP_VELOCITY
-		host.emit_feedback("act", player_pos + FEEDBACK_OFFSET)
+		host.emit_feedback("act")
 
 	velocity_y = minf(velocity_y + GRAVITY * delta, MAX_FALL_SPEED)
 	player_pos.y += velocity_y * delta

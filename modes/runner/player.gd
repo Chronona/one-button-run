@@ -1,7 +1,9 @@
 extends Node2D
 
-signal jumped(pos: Vector2)
-signal landed(pos: Vector2)
+# 演出の位置はモードが get_feedback_position() で決めるので、
+# シグナルは「起きた」ことだけを伝える。
+signal jumped
+signal landed
 
 @export var gravity: float = 500.0
 @export var jump_force: float = -300.0
@@ -16,7 +18,7 @@ const START_X := 100.0
 const JUMP_CUT_MULTIPLIER := 0.5
 const BODY_SIZE := Vector2(50, 50)
 # ジャンプ・着地エフェクトの発生位置（プレイヤー矩形の足元中央）。
-# jumped / landed の両シグナルで同じ値を使うため、重複リテラルにしない。
+# runner_mode.get_feedback_position() が参照する。
 const FEEDBACK_OFFSET := Vector2(25, 50)
 
 func reset() -> void:
@@ -52,7 +54,7 @@ func update(delta: float, act_pressed: bool, act_released: bool) -> void:
 		is_jumping = false
 		velocity_y = 0.0
 		if was_airborne:
-			landed.emit(position + FEEDBACK_OFFSET)
+			landed.emit()
 
 func _try_jump() -> void:
 	if not on_ground:
@@ -60,7 +62,7 @@ func _try_jump() -> void:
 	velocity_y = jump_force
 	is_jumping = true
 	on_ground = false
-	jumped.emit(position + FEEDBACK_OFFSET)
+	jumped.emit()
 
 func _cut_jump() -> void:
 	if is_jumping and velocity_y < 0.0:
