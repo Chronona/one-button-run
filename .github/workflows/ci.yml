@@ -91,7 +91,10 @@ jobs:
       - name: core と契約テストが変更されていないこと
         run: |
           set -euo pipefail
-          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          # checkout が fetch-depth: 0 で完全な履歴を取っているので、ここで
+          # 追加の fetch は不要。--depth=1 を付けると既存の履歴が切り落とされて
+          # shallow になり、PR ブランチが base より遅れている場合に
+          # "no merge base" で落ちる。
           changed="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")"
           echo "変更ファイル:"
           echo "$changed"
