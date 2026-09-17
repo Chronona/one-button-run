@@ -108,7 +108,10 @@ jobs:
               and never reference the `Input` singleton. The genre difference must come
               from what a tap MEANS, not from adding a second control.
             - Never edit `core/**`, `tests/**` or `.github/**`. CI rejects pull
-              requests from this workflow that change them.
+              requests from this workflow that change them. This includes
+              `tests/golden/`: a new mode has no recorded difficulty curve yet, and the
+              contract test will say so and pass. A human records it after deciding the
+              balance is right.
             - Never delete or modify an existing mode under `modes/`. Old modes are
               kept so that a failed update can be rolled back by setting `active` back
               to the previous id.
