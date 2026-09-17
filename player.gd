@@ -25,6 +25,10 @@ func reset() -> void:
 func get_body_rect() -> Rect2:
 	return Rect2(position, BODY_SIZE)
 
+# 1回のジャンプで接地できない時間。障害物の最低間隔はこれを上回らなければ、
+# 着地前に次の障害物が到達する＝回避不能な配置になる。
+func get_airtime() -> float:
+	return 2.0 * absf(jump_force) / gravity
 
 # 入力と時間は必ず引数で注入する。Input シングルトンを直接参照しないので、
 # 固定タイムステップのヘッドレス再生が完全に決定論的になる。

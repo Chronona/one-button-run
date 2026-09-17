@@ -18,7 +18,9 @@ var state: GameState = GameState.START
 var score: float = 0.0
 var high_score: int = 0
 var game_speed: float = 200.0
-# スポーン間隔の保証用（秒）。最低間隔は速度に追従するので高速化しても詰まらない
+# スポーン間隔の下限（秒）。プレイヤーの滞空時間＋反応猶予から導出するので、
+# ジャンプ性能を調整しても回避不能な配置は生まれない。
+const SPAWN_REACTION_MARGIN := 0.25
 const MIN_SPAWN_INTERVAL := 1.0
 const SPAWN_INTERVAL_RANDOM := 1.5
 const MIN_GAP_PIXELS := 350.0
@@ -44,6 +46,7 @@ const FEEDBACK_MAP := {
 
 var spawn_cooldown: float = INITIAL_SPAWN_COOLDOWN
 
+var _min_spawn_interval: float = MIN_SPAWN_INTERVAL
 var _rng := RandomNumberGenerator.new()
 var _act_pressed_latch: bool = false
 var _act_released_latch: bool = false
@@ -60,6 +63,8 @@ func _ready() -> void:
 
 	player.jumped.connect(_on_player_jumped)
 	player.landed.connect(_on_player_landed)
+
+	_min_spawn_interval = maxf(MIN_SPAWN_INTERVAL, player.get_airtime() + SPAWN_REACTION_MARGIN)
 
 # テストとリプレイのための決定論シード。実プレイでは _ready の randomize が効く。
 # seed の代入が state もリセットするので、state を別途 0 にしてはいけない
@@ -226,7 +231,7 @@ func tick(delta: float) -> void:
 	spawn_cooldown -= delta
 	if spawn_cooldown <= 0.0:
 		spawn_obstacle()
-		var base_interval := maxf(MIN_SPAWN_INTERVAL, MIN_GAP_PIXELS / game_speed)
+		var base_interval := maxf(_min_spawn_interval, MIN_GAP_PIXELS / game_speed)
 		spawn_cooldown = base_interval + _rng.randf() * SPAWN_INTERVAL_RANDOM
 
 	_check_collision()
