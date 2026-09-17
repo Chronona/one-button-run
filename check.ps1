@@ -25,7 +25,15 @@ $out += ""
 $out += "== run 8s (no output besides the Godot banner means no startup error)"
 $out += (godot --headless --path $proj --quit-after 8 2>&1 | Out-String).Trim()
 $out += ""
-$out += "== L0 contract tests"
+$out += "== uid scan (.gd without a matching .uid)"
+$missingUid = $scripts | ForEach-Object { $_ -replace '^res://', '' } |
+  Where-Object { -not (Test-Path (Join-Path $proj ($_ + ".uid"))) }
+if ($missingUid) {
+  $out += ($missingUid | ForEach-Object { "  missing: $_.uid" })
+  $out += "ERROR: 上記の .uid がありません。godot --headless --path . --import で生成し、コミットに含めてください。"
+} else { $out += "(clean)" }
+$out += ""
+$out += "== contract (L0) + regression (L2) tests"
 $out += (godot --headless --path $proj --script res://tests/run_tests.gd 2>&1 | Out-String).Trim()
 $out += if ($LASTEXITCODE -eq 0) { "== RESULT: 契約テスト PASS" } else { "== RESULT: 契約テスト FAIL (exit=$LASTEXITCODE)" }
 
