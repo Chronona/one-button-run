@@ -1,0 +1,7 @@
+{
+  "id": "runner",
+  "description": "現在アクティブなゲームモードの契約値。ジャンルを差し替えるときは、このファイルとボットを一緒に差し替える。テストコード自体は変更しない。",
+  "act_semantics": "jump",
+
+  "input_isolated_scripts": ["res://player.gd", "res://obstacle.gd"]
+}

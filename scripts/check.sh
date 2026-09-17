@@ -32,8 +32,17 @@ else
 fi
 
 echo "== indent scan (leading spaces in *.gd)"
-if grep -nE '^[ ]+[[:alnum:]@_]' *.gd; then
+if find . -name '*.gd' -not -path './.godot/*' -print0 \
+    | xargs -0 grep -nE '^[ ]+[[:alnum:]@_]'; then
   echo "Found lines with space indentation."
 else
   echo "(clean)"
+fi
+echo ""
+
+echo "== L0 contract tests"
+if command -v "$GODOT_BIN" >/dev/null 2>&1; then
+  "$PROJECT_DIR/scripts/test.sh"
+else
+  echo "WARNING: godot command not found; skipping contract tests." >&2
 fi

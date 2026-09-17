@@ -20,5 +20,9 @@ if ($hits) { $out += ($hits | ForEach-Object { "$($_.Filename):$($_.LineNumber):
 $out += ""
 $out += "== run 8s (no output besides the Godot banner means no startup error)"
 $out += (godot --headless --path $proj --quit-after 8 2>&1 | Out-String).Trim()
+$out += ""
+$out += "== L0 contract tests"
+$out += (godot --headless --path $proj --script res://tests/run_tests.gd 2>&1 | Out-String).Trim()
+$out += if ($LASTEXITCODE -eq 0) { "== RESULT: 契約テスト PASS" } else { "== RESULT: 契約テスト FAIL (exit=$LASTEXITCODE)" }
 
 $out | ForEach-Object { $_ }
