@@ -6,9 +6,9 @@ extends SceneTree
 # ゴールデン値は tests/ 配下にあるため、自動フローは CI の guard ジョブによって
 # 更新できない。バランス調整でカーブが変わったときは、人間が意図的に記録し直す。
 
-const REGISTRY_PATH := "res://modes/registry.json"
 const GOLDEN_DIR := "res://tests/golden"
 const REPLAY := preload("res://tests/support/replay.gd")
+const MODE_REGISTRY := preload("res://core/mode_registry.gd")
 
 const RNG_SEED := 424242
 const CHECKPOINTS := [10.0, 30.0, 60.0, 120.0, 180.0]
@@ -18,10 +18,9 @@ const ACT_COUNT_TOLERANCE := 1
 func _initialize() -> void:
 	await process_frame
 
-	var registry := _read_json(REGISTRY_PATH)
-	var active: String = registry.get("active", "")
-	var entry: Dictionary = registry.get("modes", {}).get(active, {})
-	var spec := _read_json(entry.get("spec", ""))
+	# 記録も照合も、有効なモードの解決には同じ core/mode_registry.gd を通す。
+	var active: String = MODE_REGISTRY.active_id()
+	var spec: Dictionary = MODE_REGISTRY.active_spec()
 	var bot_path: String = spec.get("bot", "")
 
 	if active == "" or bot_path == "" or not ResourceLoader.exists(bot_path):
@@ -56,9 +55,3 @@ func _initialize() -> void:
 		print("  t=%5.1f  difficulty=%7.2f  act_count=%3d  alive=%s"
 			% [sample["t"], sample["difficulty"], sample["act_count"], sample["alive"]])
 	quit(0)
-
-func _read_json(path: String) -> Dictionary:
-	if path == "" or not FileAccess.file_exists(path):
-		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	return parsed if parsed is Dictionary else {}

@@ -4,13 +4,16 @@ extends RefCounted
 #  - 操作しなければ必ず死ぬ（= 放置で遊べてしまうゲームではない）
 #  - 参照ボットは規定秒数を生存できる（= 理不尽な詰み配置がない）
 #  - 開始直後に猶予がある / 難易度は単調非減少で上限がある
+#
+# ここで見るのはカーブの「形」（下がらない・青天井でない）だけ。記録した値と
+# 同じかどうかは L2 の tests/regression/test_difficulty_curve.gd が見る。
 
 const HARNESS := preload("res://tests/support/harness.gd")
 
 func run(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
 	_test_grace(reporter, tree, spec)
 	_test_idle_death(reporter, tree, spec)
-	_test_difficulty_curve(reporter, tree, spec)
+	_test_difficulty_shape(reporter, tree, spec)
 	_test_bot_survival(reporter, tree, spec)
 
 func _test_grace(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
@@ -33,7 +36,7 @@ func _test_idle_death(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -
 	reporter.check(harness.main.is_game_over(), "無操作で %.0f 秒生き延びてしまった（脅威が機能していない）" % limit)
 	harness.teardown()
 
-func _test_difficulty_curve(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
+func _test_difficulty_shape(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
 	var cap: float = spec.get("max_speed_cap", 600.0)
 	var harness = HARNESS.new()
 	harness.setup(tree)

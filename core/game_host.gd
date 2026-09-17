@@ -24,7 +24,7 @@ signal feedback_emitted(event_name: String)
 @onready var game_over_label: Label = $GameOverLabel
 @onready var mode_container: Node2D = $ModeContainer
 
-const REGISTRY_PATH := "res://modes/registry.json"
+const MODE_REGISTRY := preload("res://core/mode_registry.gd")
 const HIGH_SCORE_PATH := "user://high_score.txt"
 
 # 唯一の操作アクション。1ボタン契約の中心なので、ここを増やすと契約テストが落ちる。
@@ -61,16 +61,10 @@ func _load_active_mode() -> void:
 	mode_container.add_child(_mode)
 	_mode.mode_setup(self)
 
-# registry.json の active が指すモードの定義を返す。テストもここを通して spec を引く。
+# registry.json の active が指すモードの定義を返す。解決手順は core/mode_registry.gd に
+# 一本化してあり、ホストもテストもゴールデン記録ツールも同じ読み方を通る。
 func get_active_mode_entry() -> Dictionary:
-	if not FileAccess.file_exists(REGISTRY_PATH):
-		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(REGISTRY_PATH))
-	if not parsed is Dictionary:
-		return {}
-	var active: String = parsed.get("active", "")
-	var modes: Dictionary = parsed.get("modes", {})
-	return modes.get(active, {})
+	return MODE_REGISTRY.active_entry()
 
 func get_active_mode() -> Node:
 	return _mode

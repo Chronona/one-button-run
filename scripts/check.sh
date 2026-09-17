@@ -42,7 +42,7 @@ else
 fi
 echo ""
 
-echo "== L0 contract tests"
+echo "== contract (L0) + regression (L2) tests"
 if command -v "$GODOT_BIN" >/dev/null 2>&1; then
   "$PROJECT_DIR/scripts/test.sh"
 else

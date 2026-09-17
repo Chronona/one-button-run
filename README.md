@@ -35,8 +35,15 @@ godot .
 
 ## テスト
 
-`tests/` には「1ボタン(タップ)で遊べるゲームである」という条件を検証する L0 契約テストが入っています。
-時間と入力はテスト側が固定タイムステップで注入するため、数百秒ぶんのプレイ検証が1秒未満で終わります。
+テストは「落ちたときに何をすべきか」で分かれています。時間と入力はテスト側が固定タイムステップで
+注入するため、数百秒ぶんのプレイ検証が1秒未満で終わります。
+
+| ディレクトリ | 層 | 落ちたときの意味 |
+| --- | --- | --- |
+| `tests/contract/` | L0 不変契約 | 「1ボタン(タップ)で遊べるゲームである」が壊れている。直す |
+| `tests/regression/` | L2 回帰検出 | 記録時から体感が変わっている。意図した変更かを判断する |
+
+どちらも同じランナーが L0 -> L2 の順で実行します。
 
 ```
 godot --headless --path . --script res://tests/run_tests.gd
@@ -49,7 +56,8 @@ godot --headless --path . --script res://tests/run_tests.gd
 
 閾値（猶予秒数、無操作死の上限、参照ボットの生存目標など）は、いま有効なモードの spec
 （`modes/registry.json` の `active` が指すもの。既定では `modes/runner/spec.json`）にあります。
-設計の経緯は [docs/adr/0001](docs/adr/0001-test-layering-and-injected-time.md) を参照してください。
+設計の経緯は [docs/adr/0001](docs/adr/0001-test-layering-and-injected-time.md) と
+[docs/adr/0005](docs/adr/0005-test-layout-and-registry-resolution.md) を参照してください。
 
 ## 構成
 
@@ -57,7 +65,10 @@ godot --headless --path . --script res://tests/run_tests.gd
 | --- | --- |
 | `core/` | ジャンルが変わっても不変な部分。状態機械、スコアとハイスコア、唯一の入力経路、モードの読み込み |
 | `modes/` | 実際のゲームプレイ。`registry.json` の `active` が有効なモードを指す |
-| `tests/` | L0 契約テストと実行基盤 |
+| `tests/` | L0 契約テスト（`contract/`）、L2 回帰検出（`regression/`）と実行基盤 |
+
+`registry.json` の解決（`active` が指すモードの `scene` / `spec` / `bot`）は
+`core/mode_registry.gd` に一本化してあり、ホストもテストも同じ経路を通ります。
 
 ゲームモードは `core/game_mode.gd` のインターフェースを実装します。時間も入力もホストから
 注入されるため、モードは `_process` も `_input` も持ちません。

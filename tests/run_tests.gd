@@ -1,13 +1,20 @@
 extends SceneTree
 
-# L0 契約テストのヘッドレスランナー。
+# 品質テストのヘッドレスランナー。
 #   godot --headless --path . --script res://tests/run_tests.gd
 # 時間はテスト側が固定タイムステップで注入するため、実時間を待たずに
 # 数百秒ぶんのプレイを検証できる。結果は終了コードで返す。
+#
+# 層はディレクトリで分かれている（docs/adr/0001, 0005）。
+#   tests/contract/   L0: ジャンルが変わっても不変の契約。落ちたら「遊べていない」
+#   tests/regression/ L2: 記録した値との差分検出。落ちたら「体感が変わった」
+# どちらも同じランナーから同じ順（L0 -> L2）で走らせる。先に契約が落ちている
+# ときに回帰差分まで並ぶと、原因が埋もれるため。
 
 const CONTRACT_DIR := "res://tests/contract"
-const REGISTRY_PATH := "res://modes/registry.json"
+const REGRESSION_DIR := "res://tests/regression"
 const REPORTER := preload("res://tests/support/reporter.gd")
+const MODE_REGISTRY := preload("res://core/mode_registry.gd")
 const REGISTRY_CONTRACT := "res://tests/contract/test_mode_registry.gd"
 
 func _initialize() -> void:
@@ -16,13 +23,13 @@ func _initialize() -> void:
 	await process_frame
 
 	var reporter = REPORTER.new()
-	var scripts := _contract_scripts()
-	if scripts.is_empty():
+	var contract_scripts := _scripts_in(CONTRACT_DIR)
+	if contract_scripts.is_empty():
 		printerr("FATAL: 契約テストが1件も見つからない: %s" % CONTRACT_DIR)
 		quit(1)
 		return
 
-	var spec := _load_spec()
+	var spec: Dictionary = MODE_REGISTRY.active_spec()
 	if spec.is_empty():
 		# spec が引けない原因はほぼ registry の不整合なので、他のテストを走らせて
 		# 二次被害の失敗を並べるより、レジストリ契約だけを回して原因を名指しする。
@@ -32,9 +39,15 @@ func _initialize() -> void:
 		return
 
 	print("== L0 契約テスト (mode=%s)" % spec.get("id", "?"))
-
-	for path in scripts:
+	for path in contract_scripts:
 		_run_one(reporter, path, spec)
+
+	var regression_scripts := _scripts_in(REGRESSION_DIR)
+	if not regression_scripts.is_empty():
+		print("")
+		print("== L2 回帰検出 (mode=%s)" % spec.get("id", "?"))
+		for path in regression_scripts:
+			_run_one(reporter, path, spec)
 
 	_report(reporter)
 
@@ -58,35 +71,14 @@ func _report(reporter: RefCounted) -> void:
 		print("  - %s" % failure)
 	quit(1)
 
-# 契約値は registry.json の active が指すモードから引く。ジャンルを差し替えても
-# ランナー側は変わらず、差し替わるのは registry の active とモード配下の spec だけ。
-func _load_spec() -> Dictionary:
-	var registry := _read_json(REGISTRY_PATH)
-	var active: String = registry.get("active", "")
-	var modes: Dictionary = registry.get("modes", {})
-	var entry: Dictionary = modes.get(active, {})
-	var spec_path: String = entry.get("spec", "")
-	if spec_path == "":
-		return {}
-	var spec := _read_json(spec_path)
-	if not spec.is_empty():
-		spec["id"] = spec.get("id", active)
-	return spec
-
-func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	return parsed if parsed is Dictionary else {}
-
-func _contract_scripts() -> PackedStringArray:
+func _scripts_in(dir_path: String) -> PackedStringArray:
 	var found := PackedStringArray()
-	var dir := DirAccess.open(CONTRACT_DIR)
+	var dir := DirAccess.open(dir_path)
 	if dir == null:
 		return found
 	for file_name in dir.get_files():
 		# エクスポート後は .gd が .gdc / .remap になるが、テストはソースから実行する
 		if file_name.begins_with("test_") and file_name.ends_with(".gd"):
-			found.append("%s/%s" % [CONTRACT_DIR, file_name])
+			found.append("%s/%s" % [dir_path, file_name])
 	found.sort()
 	return found
