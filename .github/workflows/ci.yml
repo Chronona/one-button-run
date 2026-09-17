@@ -25,7 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # エクスポート系は PR のときだけ。main への push では deploy-pages.yml が
+      # 同じコミットを本番エクスポートするため、壊れていればそちらが落ちる。
       - name: Set up export templates
+        if: github.event_name == 'pull_request'
         run: |
           set -euo pipefail
           # イメージはテンプレートを /root 配下に置くが、Actions はコンテナの
@@ -56,19 +59,16 @@ jobs:
           # 初回インポートを先に完走させておかないと、リソースの解決が通らない。
           godot --headless --path . --import
 
-      - name: L0 契約テスト
+      # check.sh は末尾で test.sh を呼ぶので、契約テストを別ステップで先に
+      # 走らせると二重実行になる。開発者が手元で叩くのと同じ1本にそろえる。
+      - name: 静的チェックと契約テスト
         run: |
           set -euo pipefail
-          chmod +x scripts/test.sh
-          bash scripts/test.sh
-
-      - name: 静的チェック（構文・起動・インデント）
-        run: |
-          set -euo pipefail
-          chmod +x scripts/check.sh
+          chmod +x scripts/check.sh scripts/test.sh
           bash scripts/check.sh
 
       - name: Web エクスポートが通ることを確認
+        if: github.event_name == 'pull_request'
         run: |
           set -euo pipefail
           # deploy-pages.yml と同じ手順。main にマージしてから公開が壊れていた、を防ぐ。
