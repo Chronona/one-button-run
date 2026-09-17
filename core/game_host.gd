@@ -160,22 +160,11 @@ func update_ui() -> void:
 	score_label.text = "Score: %d" % int(score)
 	high_score_label.text = "High Score: %d" % high_score
 
-# 演出の発火。ノードの解決はモードのシーン内で行うので、ホストは
-# どんな見た目・音になっているかを知らない。
-func emit_feedback(event_name: String, pos: Vector2) -> void:
-	var entry: Dictionary = get_feedback_map().get(event_name, {})
+# 演出の発火。ホストが知っているのはイベント名だけで、見た目・音・位置は
+# すべてモードに委ねる。ジャンルを差し替えてもここは変わらない。
+func emit_feedback(event_name: String) -> void:
 	if _mode != null:
-		var particles_name: String = entry.get("particles", "")
-		if particles_name != "":
-			var particles = _mode.get_node_or_null(particles_name)
-			if particles != null and particles.has_method("restart"):
-				particles.position = pos
-				particles.restart()
-		var se_name: String = entry.get("se", "")
-		if se_name != "":
-			var sound_player = _mode.get_node_or_null(se_name)
-			if sound_player != null and sound_player.has_method("play"):
-				sound_player.play()
+		_mode.play_feedback(event_name)
 	feedback_emitted.emit(event_name)
 
 func start_game() -> void:
@@ -204,11 +193,10 @@ func game_over() -> void:
 		game_over_label.text = "Game Over - Score: %d / High: %d\nSpaceで再開" % [int(score), high_score]
 	game_over_label.show()
 
-	var fail_pos: Vector2 = _mode.get_fail_position() if _mode != null else Vector2.ZERO
-	emit_feedback("fail", fail_pos)
+	emit_feedback("fail")
 
 	if is_record:
-		emit_feedback("record", fail_pos)
+		emit_feedback("record")
 
 func _process(delta: float) -> void:
 	tick(delta)

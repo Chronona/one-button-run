@@ -81,8 +81,11 @@ jobs:
             1. `modes/<id>/<id>_mode.gd` — `extends "res://core/game_mode.gd"`.
                Implement `mode_start()`, `mode_tick(delta, act_pressed, act_released)`,
                `is_failed()`, `get_difficulty()`, `get_feedback_map()` and
-               `get_fail_position()`. Read `modes/runner/runner_mode.gd` as the
-               reference implementation.
+               `get_feedback_position(event_name)`. Read `modes/runner/runner_mode.gd`
+               as the reference implementation. The host never handles coordinates:
+               it calls `host.emit_feedback("<event>")` with a name only, and the base
+               class resolves the nodes inside your scene and places them at
+               `get_feedback_position()`.
             2. `modes/<id>/<id>.tscn` — the mode's scene, with the mode script on the
                root node. It owns its own visuals, particles and AudioStreamPlayer
                nodes, because the host knows nothing about how the game looks or sounds.

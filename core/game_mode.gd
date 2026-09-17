@@ -38,3 +38,26 @@ func get_difficulty() -> float:
 # 丸ごと差し替えても tests/contract/test_feedback.gd は書き換わらない。
 func get_feedback_map() -> Dictionary:
 	return {}
+
+# そのイベントの演出をどこに出すか。ジャンルごとにプレイヤーの持ち方が違うので
+# モードが答える。ホストは座標を知らないし、知る必要もない。
+func get_feedback_position(_event_name: String) -> Vector2:
+	return Vector2.ZERO
+
+# 演出の再生。ノードの解決も配置もモードのシーン内で完結する。
+# ホストはイベント名を渡すだけで、見た目・音・位置のどれも知らない。
+func play_feedback(event_name: String) -> void:
+	var entry: Dictionary = get_feedback_map().get(event_name, {})
+
+	var particles_name: String = entry.get("particles", "")
+	if particles_name != "":
+		var particles = get_node_or_null(particles_name)
+		if particles != null and particles.has_method("restart"):
+			particles.position = get_feedback_position(event_name)
+			particles.restart()
+
+	var se_name: String = entry.get("se", "")
+	if se_name != "":
+		var sound_player = get_node_or_null(se_name)
+		if sound_player != null and sound_player.has_method("play"):
+			sound_player.play()
