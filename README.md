@@ -27,7 +27,8 @@ godot .
 | コマンド | 内容 |
 | --- | --- |
 | `bash scripts/check.sh` | 静的チェック（構文・ヘッドレス起動・インデント）と契約テストを一括実行 |
-| `bash scripts/test.sh` | L0 契約テストのみを実行 |
+| `bash scripts/test.sh` | 契約テストのみを実行 |
+| `bash scripts/record-golden.sh` | 難易度カーブの基準値を記録し直す（意図的なバランス変更時のみ） |
 | `.\check.ps1` | Windows 版。上と同じ内容を実行 |
 
 `GODOT_BIN` 環境変数で Godot の実行ファイルを指定できます（既定は `godot`）。
@@ -40,6 +41,11 @@ godot .
 ```
 godot --headless --path . --script res://tests/run_tests.gd
 ```
+
+また、シードを固定して参照ボットに操作させ、決まった時刻での難易度と「ボットが何回タップしたか」を
+`tests/golden/<mode>.json` の記録値と比べることで、バランス調整の積み重ねによるカーブの変化を
+検出します。意図的にカーブを変えたときは `bash scripts/record-golden.sh` で記録し直してください
+（`tests/` は自動フローから変更できないため、この操作は人間が行います）。
 
 閾値（猶予秒数、無操作死の上限、参照ボットの生存目標など）は、いま有効なモードの spec
 （`modes/registry.json` の `active` が指すもの。既定では `modes/runner/spec.json`）にあります。

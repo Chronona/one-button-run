@@ -87,5 +87,11 @@ jobs:
               default `modes/runner/spec.json`) holds the tunable thresholds. Adjusting a
               value there is allowed only when the game genuinely changed for the better;
               say so explicitly in the pull request description.
+            - `tests/golden/<mode>.json` records the difficulty curve. You cannot update it,
+              and you must not try to. If `test_difficulty_curve` fails, your change altered
+              how the game feels. That is not automatically wrong, but it is not a small safe
+              improvement either: revert the tweak and pick a different improvement instead.
+              Say in the pull request description if you hit this, so a human can decide
+              whether the curve should be re-recorded.
           use-github-token: true
           timeout-minutes: 30
