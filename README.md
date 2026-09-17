@@ -24,7 +24,25 @@ godot .
 
 ## チェックツール
 
-.\check.ps1 は、プロジェクトの問題点をチェックします。
+| コマンド | 内容 |
+| --- | --- |
+| `bash scripts/check.sh` | 静的チェック（構文・ヘッドレス起動・インデント）と契約テストを一括実行 |
+| `bash scripts/test.sh` | L0 契約テストのみを実行 |
+| `.\check.ps1` | Windows 版。上と同じ内容を実行 |
+
+`GODOT_BIN` 環境変数で Godot の実行ファイルを指定できます（既定は `godot`）。
+
+## テスト
+
+`tests/` には「1ボタン(タップ)で遊べるゲームである」という条件を検証する L0 契約テストが入っています。
+時間と入力はテスト側が固定タイムステップで注入するため、数百秒ぶんのプレイ検証が1秒未満で終わります。
+
+```
+godot --headless --path . --script res://tests/run_tests.gd
+```
+
+閾値（猶予秒数、無操作死の上限、参照ボットの生存目標など）は `tests/spec/active.spec.json` にあります。
+設計の経緯は [docs/adr/0001](docs/adr/0001-test-layering-and-injected-time.md) を参照してください。
 
 ## ライセンス
 
