@@ -4,6 +4,9 @@ extends Node2D
 # 動きはホストが注入する時間で進める。自前の更新関数は持たない。
 
 const VIEW_HEIGHT := 648.0
+const PILLAR_COLOR := Color(0.10, 0.55, 0.45, 1.0)
+const EDGE_COLOR := Color(0.45, 0.95, 0.80, 1.0)
+const EDGE_THICKNESS := 10.0
 
 var gap_center: float = 300.0
 var gap_half: float = 150.0
@@ -34,20 +37,26 @@ func front_x() -> float:
 	return position.x + gate_width
 
 func collides_with(body: Rect2) -> bool:
-	var gap_top: float = gap_center - gap_half
-	var gap_bottom: float = gap_center + gap_half
-	var top := Rect2(position.x, -40.0, gate_width, gap_top + 40.0)
-	var bottom := Rect2(position.x, gap_bottom, gate_width, VIEW_HEIGHT - gap_bottom + 40.0)
-	return body.intersects(top) or body.intersects(bottom)
+	return body.intersects(_top_rect(position.x)) or body.intersects(_bottom_rect(position.x))
+
+func _gap_top() -> float:
+	return gap_center - gap_half
+
+func _gap_bottom() -> float:
+	return gap_center + gap_half
+
+func _top_rect(offset_x: float) -> Rect2:
+	return Rect2(offset_x, -40.0, gate_width, _gap_top() + 40.0)
+
+func _bottom_rect(offset_x: float) -> Rect2:
+	return Rect2(offset_x, _gap_bottom(), gate_width, VIEW_HEIGHT - _gap_bottom() + 40.0)
 
 func _build_visuals() -> void:
-	var gap_top: float = gap_center - gap_half
-	var gap_bottom: float = gap_center + gap_half
-	_add_pillar(Rect2(0.0, -40.0, gate_width, gap_top + 40.0), Color(0.10, 0.55, 0.45, 1.0))
-	_add_pillar(Rect2(0.0, gap_bottom, gate_width, VIEW_HEIGHT - gap_bottom + 40.0), Color(0.10, 0.55, 0.45, 1.0))
+	_add_pillar(_top_rect(0.0), PILLAR_COLOR)
+	_add_pillar(_bottom_rect(0.0), PILLAR_COLOR)
 	# 隙間の縁を明るくして、安全な通り道を示す。
-	_add_pillar(Rect2(0.0, gap_top - 10.0, gate_width, 10.0), Color(0.45, 0.95, 0.80, 1.0))
-	_add_pillar(Rect2(0.0, gap_bottom, gate_width, 10.0), Color(0.45, 0.95, 0.80, 1.0))
+	_add_pillar(Rect2(0.0, _gap_top() - EDGE_THICKNESS, gate_width, EDGE_THICKNESS), EDGE_COLOR)
+	_add_pillar(Rect2(0.0, _gap_bottom(), gate_width, EDGE_THICKNESS), EDGE_COLOR)
 
 func _add_pillar(rect: Rect2, color: Color) -> void:
 	var pillar := Polygon2D.new()

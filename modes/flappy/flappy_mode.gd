@@ -78,7 +78,7 @@ func mode_start() -> void:
 		_despawn(gate_node)
 	_sync_bird()
 
-func mode_tick(delta: float, act_pressed: bool, act_released: bool) -> void:
+func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 	_elapsed += delta
 	scroll_speed = minf(BASE_SPEED + _elapsed * SPEED_PER_SECOND, MAX_SPEED)
 
