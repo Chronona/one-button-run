@@ -2,6 +2,10 @@ name: CI
 
 on:
   pull_request:
+  # main への push でも走らせる。ブランチ保護の
+  # "Require branches to be up to date before merging" は無効なので、
+  # PR のチェックが古いコミットの上で緑だった場合を拾えるのはこちらだけ。
+  # （意味的コンフリクトの唯一の検知口なので、外すならまず保護設定を変える）
   push:
     branches: [main]
   workflow_dispatch:
@@ -78,24 +82,44 @@ jobs:
 
   guard:
     name: 契約テスト改変ガード
-    # 自動フロー（日次の auto-improve と週次の weekly-update）の PR だけを対象にする。
-    # 人間は契約そのものを変更してよい。
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'opencode/')
+    # このジョブはブランチ保護の必須チェックに指定してあるため、全 PR で必ず
+    # 起動させる。ジョブレベルの if でスキップすると結論が skipped になり、
+    # マージ可否が「必須チェックが skipped のときどう扱われるか」という
+    # GitHub 側の解釈に依存してしまう。対象ブランチの判定はステップ内で行い、
+    # 対象外なら成功として抜けることで、チェックは常に緑を報告する。
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      # 対象外の PR では履歴の全取得を省く（fetch-depth: 0 は重い）。
       - name: Checkout
+        if: startsWith(github.head_ref, 'opencode/')
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: core と契約テストが変更されていないこと
+        # ブランチ名は外部から与えられる文字列なので、run に直接展開せず
+        # 環境変数で受ける。
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
+          # 自動フロー（日次の auto-improve と週次の weekly-update）の PR だけを
+          # 対象にする。人間は契約そのものを変更してよい。
+          case "$HEAD_REF" in
+            opencode/*) ;;
+            *)
+              echo "OK: 自動フロー以外の PR のため対象外（保護対象の変更を許可）。"
+              exit 0
+              ;;
+          esac
+
           # checkout が fetch-depth: 0 で完全な履歴を取っているので、ここで
           # 追加の fetch は不要。--depth=1 を付けると既存の履歴が切り落とされて
           # shallow になり、PR ブランチが base より遅れている場合に
           # "no merge base" で落ちる。
-          changed="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")"
+          changed="$(git diff --name-only "origin/$BASE_REF...HEAD")"
           echo "変更ファイル:"
           echo "$changed"
           protected="$(echo "$changed" | grep -E '^(core/|tests/|\.github/workflows/)' || true)"
