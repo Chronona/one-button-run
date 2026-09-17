@@ -95,3 +95,28 @@ jobs:
               whether the curve should be re-recorded.
           use-github-token: true
           timeout-minutes: 30
+
+      - name: 生成結果を独立に検証
+        run: |
+          set -euo pipefail
+          # GITHUB_TOKEN が作った PR の CI は approval-required 状態で止まるため
+          # （GitHub の仕様。人が「Approve workflows to run」を押すまで走らない）、
+          # エージェントの自己申告だけが残る状態になりうる。ここで同じ検査を
+          # ワークフロー自身が回して、失敗ならこの実行を赤にする。
+          godot --headless --path . --import
+          bash scripts/check.sh
+
+      - name: 保護対象に触れていないことを確認
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          changed="$(git diff --name-only origin/main...HEAD 2>/dev/null || git diff --name-only origin/main HEAD)"
+          echo "変更ファイル:"
+          echo "$changed"
+          protected="$(echo "$changed" | grep -E '^(core/|tests/|\.github/workflows/)' || true)"
+          if [ -n "$protected" ]; then
+            echo "::error::保護対象が変更されています（ゲームプレイの変更は modes/ 配下で行ってください）:"
+            echo "$protected"
+            exit 1
+          fi
+          echo "OK: 保護対象への変更はありません。"

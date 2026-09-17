@@ -84,6 +84,15 @@ godot --headless --path . --script res://tests/run_tests.gd
 どちらの自動フローも `core/`・`tests/`・`.github/workflows/` を変更できません（CI の
 `guard` ジョブが落とします）。生成された PR は人間がレビューしてマージします。
 
+> **注意:** `GITHUB_TOKEN` が作成した PR の CI は `approval-required` 状態で止まります
+> （[GitHub の仕様](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)）。
+> PR のマージボックスに出る **Approve workflows to run** を押すまで契約テストは走りません。
+> 押さずにマージすると、PR 本文のエージェントの自己申告しか根拠が無い状態になります。
+> このため両フローは、生成後に自分で `scripts/check.sh` と保護対象の検査を回して、
+> 失敗ならワークフロー実行自体を赤にします（Actions タブで確認できます）。
+> 恒久対策としては、main にブランチ保護を設定して CI を required status check に
+> するか、`GITHUB_TOKEN` の代わりに PAT / GitHub App トークンを使う方法があります。
+
 週次更新が不調だった場合は、`modes/registry.json` の `active` を前のモード ID に戻せば
 巻き戻せます。旧モードは削除されません。
 
