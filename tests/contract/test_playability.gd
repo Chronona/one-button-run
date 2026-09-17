@@ -41,25 +41,25 @@ func _test_difficulty_curve(reporter: RefCounted, tree: SceneTree, spec: Diction
 	main.start_game()
 
 	reporter.begin_case("難易度は単調非減少")
-	var previous: float = main.game_speed
+	var previous: float = main.get_difficulty()
 	var monotonic := true
 	for i in 600:
 		main.tick(harness.FIXED_DELTA)
 		if main.is_game_over():
 			main.start_game()
-			previous = main.game_speed
+			previous = main.get_difficulty()
 			continue
-		if main.game_speed < previous - 0.0001:
+		if main.get_difficulty() < previous - 0.0001:
 			monotonic = false
 			break
-		previous = main.game_speed
+		previous = main.get_difficulty()
 	reporter.check(monotonic, "進行中に難易度が下がった")
 
 	reporter.begin_case("難易度に上限がある")
 	main.start_game()
 	main.score = 100000.0
 	main.tick(harness.FIXED_DELTA)
-	reporter.at_most(main.game_speed, cap, "速度が上限 %.0f を超えた" % cap)
+	reporter.at_most(main.get_difficulty(), cap, "速度が上限 %.0f を超えた" % cap)
 
 	harness.teardown()
 
