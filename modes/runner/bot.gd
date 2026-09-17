@@ -10,12 +10,12 @@ const PLAYER_FRONT_X := 170.0
 const LEAD_SECONDS := 0.35
 
 func decide(main: Node, harness: RefCounted) -> void:
-	var player = main.get_node("Player")
+	var player = main.get_active_mode().get_player()
 	if not player.on_ground:
 		# 空中では押しっぱなしにして、ジャンプカットで高度を失わないようにする
 		return
 
-	var lead: float = main.game_speed * LEAD_SECONDS
+	var lead: float = main.get_difficulty() * LEAD_SECONDS
 	for obstacle in main.get_tree().get_nodes_in_group("obstacles"):
 		var distance: float = obstacle.position.x - PLAYER_FRONT_X
 		if distance >= 0.0 and distance <= lead:

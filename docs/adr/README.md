@@ -12,4 +12,5 @@
 
 | # | タイトル | Status |
 |---|---|---|
-| [0001](0001-test-layering-and-injected-time.md) | 品質テストの3層化と、時間・入力のホスト注入 | proposed |
+| [0001](0001-test-layering-and-injected-time.md) | 品質テストの3層化と、時間・入力のホスト注入 | proposed（決定6は 0002 が置き換え） |
+| [0002](0002-core-modes-split.md) | core と modes への分離、およびモードレジストリ | proposed |

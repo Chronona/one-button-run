@@ -9,7 +9,9 @@ func run(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
 	var harness = HARNESS.new()
 	harness.setup(tree)
 	var main = harness.main
-	var feedback_map: Dictionary = main.FEEDBACK_MAP
+	# 演出の定義も実体のノードもモード側にある。ホストは素通しするだけ。
+	var mode = main.get_active_mode()
+	var feedback_map: Dictionary = main.get_feedback_map()
 
 	for event_name in spec.get("required_feedback_events", []):
 		reporter.begin_case("イベント '%s' に反応が定義されている" % event_name)
@@ -18,8 +20,8 @@ func run(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
 		var entry: Dictionary = feedback_map[event_name]
 		var particles_name: String = entry.get("particles", "")
 		var se_name: String = entry.get("se", "")
-		var has_visual := particles_name != "" and main.get_node_or_null(particles_name) != null
-		var has_audio := se_name != "" and main.get_node_or_null(se_name) != null
+		var has_visual := particles_name != "" and mode.get_node_or_null(particles_name) != null
+		var has_audio := se_name != "" and mode.get_node_or_null(se_name) != null
 		reporter.check(has_visual or has_audio, "視覚・聴覚どちらの反応も解決できない")
 
 	for event_name in spec.get("dual_channel_feedback_events", []):
@@ -27,9 +29,9 @@ func run(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
 		var entry: Dictionary = feedback_map.get(event_name, {})
 		var particles_name: String = entry.get("particles", "")
 		var se_name: String = entry.get("se", "")
-		reporter.check(particles_name != "" and main.get_node_or_null(particles_name) != null,
+		reporter.check(particles_name != "" and mode.get_node_or_null(particles_name) != null,
 			"視覚反応が解決できない: '%s'" % particles_name)
-		reporter.check(se_name != "" and main.get_node_or_null(se_name) != null,
+		reporter.check(se_name != "" and mode.get_node_or_null(se_name) != null,
 			"聴覚反応が解決できない: '%s'" % se_name)
 
 	reporter.begin_case("操作すると 'act' が発火する")

@@ -14,7 +14,9 @@ if command -v "$GODOT_BIN" >/dev/null 2>&1; then
   echo ""
 
   echo "== script check"
-  for f in res://main.gd res://player.gd res://obstacle.gd; do
+  # パスを固定で書くとファイルを移動したときに黙って検査対象から外れるので、
+  # 実在する .gd を毎回探索する。
+  for f in $(find . -name '*.gd' -not -path './.godot/*' | sed 's|^\./|res://|' | sort); do
     echo "--- $f"
     if out=$("$GODOT_BIN" --headless --path . --check-only --script "$f" 2>&1); then
       [ -n "$out" ] && echo "$out" || echo "(no output = parse clean)"

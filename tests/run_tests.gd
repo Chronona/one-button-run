@@ -6,7 +6,7 @@ extends SceneTree
 # 数百秒ぶんのプレイを検証できる。結果は終了コードで返す。
 
 const CONTRACT_DIR := "res://tests/contract"
-const SPEC_PATH := "res://tests/spec/active.spec.json"
+const REGISTRY_PATH := "res://modes/registry.json"
 const REPORTER := preload("res://tests/support/reporter.gd")
 
 func _initialize() -> void:
@@ -16,7 +16,7 @@ func _initialize() -> void:
 
 	var spec := _load_spec()
 	if spec.is_empty():
-		printerr("FATAL: spec を読み込めない: %s" % SPEC_PATH)
+		printerr("FATAL: 有効なモードの spec を読み込めない (%s)" % REGISTRY_PATH)
 		quit(1)
 		return
 
@@ -47,10 +47,25 @@ func _initialize() -> void:
 		print("  - %s" % failure)
 	quit(1)
 
+# 契約値は registry.json の active が指すモードから引く。ジャンルを差し替えても
+# ランナー側は変わらず、差し替わるのは registry の active とモード配下の spec だけ。
 func _load_spec() -> Dictionary:
-	if not FileAccess.file_exists(SPEC_PATH):
+	var registry := _read_json(REGISTRY_PATH)
+	var active: String = registry.get("active", "")
+	var modes: Dictionary = registry.get("modes", {})
+	var entry: Dictionary = modes.get(active, {})
+	var spec_path: String = entry.get("spec", "")
+	if spec_path == "":
 		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SPEC_PATH))
+	var spec := _read_json(spec_path)
+	if not spec.is_empty():
+		spec["id"] = spec.get("id", active)
+	return spec
+
+func _read_json(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	return parsed if parsed is Dictionary else {}
 
 func _contract_scripts() -> PackedStringArray:

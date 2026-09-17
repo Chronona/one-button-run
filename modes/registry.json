@@ -1,0 +1,10 @@
+{
+  "description": "利用可能なゲームモードと、いま有効なモード。週次の大型アップデートは新しいモードを追加して active を切り替える。旧モードは消さないので、事故ったら active を戻すだけで巻き戻せる。",
+  "active": "runner",
+  "modes": {
+    "runner": {
+      "scene": "res://modes/runner/runner.tscn",
+      "spec": "res://modes/runner/spec.json"
+    }
+  }
+}

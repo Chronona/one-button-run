@@ -87,16 +87,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 契約テストと実行基盤が変更されていないこと
+      - name: core と契約テストが変更されていないこと
         run: |
           set -euo pipefail
           git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
           changed="$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")"
           echo "変更ファイル:"
           echo "$changed"
-          protected="$(echo "$changed" | grep -E '^(tests/(contract|support|run_tests\.gd)|\.github/workflows/)' || true)"
+          protected="$(echo "$changed" | grep -E '^(core/|tests/(contract|support|run_tests\.gd)|\.github/workflows/)' || true)"
           if [ -n "$protected" ]; then
-            echo "::error::自動改善フローは契約テストと CI 定義を変更できません:"
+            echo "::error::自動改善フローは core・契約テスト・CI 定義を変更できません（ゲームプレイの変更は modes/ 配下で行ってください）:"
             echo "$protected"
             exit 1
           fi

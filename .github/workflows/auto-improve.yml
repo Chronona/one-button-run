@@ -78,13 +78,15 @@ jobs:
                title and description must be written in Japanese.
 
             Boundaries you must not cross:
-            - Never edit `tests/contract/**`, `tests/support/**`, `tests/run_tests.gd`, or
-              `.github/workflows/**`. These encode the promise that the game stays playable
-              with one button (tap), and CI rejects pull requests that change them.
+            - Never edit `core/**`, `tests/contract/**`, `tests/support/**`,
+              `tests/run_tests.gd`, or `.github/workflows/**`. These encode the promise that
+              the game stays playable with one button (tap), and CI rejects pull requests
+              that change them. Gameplay changes belong in `modes/`.
             - If a contract test fails, fix the game so the contract holds again. Never
               weaken, skip, or delete a test to get to green.
-            - `tests/spec/active.spec.json` holds the tunable thresholds. Adjusting a value
-              there is allowed only when the game genuinely changed for the better; say so
-              explicitly in the pull request description.
+            - The active mode's spec (`modes/registry.json` -> `active` -> `spec`, by
+              default `modes/runner/spec.json`) holds the tunable thresholds. Adjusting a
+              value there is allowed only when the game genuinely changed for the better;
+              say so explicitly in the pull request description.
           use-github-token: true
           timeout-minutes: 30

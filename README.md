@@ -41,8 +41,20 @@ godot .
 godot --headless --path . --script res://tests/run_tests.gd
 ```
 
-閾値（猶予秒数、無操作死の上限、参照ボットの生存目標など）は `tests/spec/active.spec.json` にあります。
+閾値（猶予秒数、無操作死の上限、参照ボットの生存目標など）は、いま有効なモードの spec
+（`modes/registry.json` の `active` が指すもの。既定では `modes/runner/spec.json`）にあります。
 設計の経緯は [docs/adr/0001](docs/adr/0001-test-layering-and-injected-time.md) を参照してください。
+
+## 構成
+
+| ディレクトリ | 役割 |
+| --- | --- |
+| `core/` | ジャンルが変わっても不変な部分。状態機械、スコアとハイスコア、唯一の入力経路、モードの読み込み |
+| `modes/` | 実際のゲームプレイ。`registry.json` の `active` が有効なモードを指す |
+| `tests/` | L0 契約テストと実行基盤 |
+
+ゲームモードは `core/game_mode.gd` のインターフェースを実装します。時間も入力もホストから
+注入されるため、モードは `_process` も `_input` も持ちません。
 
 ## ライセンス
 
