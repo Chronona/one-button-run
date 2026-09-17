@@ -1,0 +1,37 @@
+{
+  "id": "flappy",
+  "description": "羽ばたきモードの契約値。タップ = 羽ばたき（上昇）。重力で落ちるので、放っておけば床に落ちる。ゲートの隙間を抜けながら高度を保つ。",
+  "act_semantics": "flap",
+  "input_isolated_scripts": [
+    "res://modes/flappy/flappy_mode.gd",
+    "res://modes/flappy/gate.gd"
+  ],
+  "required_feedback_events": [
+    "act",
+    "fail",
+    "record"
+  ],
+  "dual_channel_feedback_events": [
+    "act",
+    "fail"
+  ],
+  "required_export_presets": [
+    "Web"
+  ],
+  "grace_seconds": 1.2,
+  "grace_seconds_min": 1.0,
+  "idle_death_max_seconds": 10.0,
+  "bot": "res://modes/flappy/bot.gd",
+  "bot_min_survival_seconds": 180.0,
+  "bot_seeds": [
+    1,
+    7,
+    42,
+    555,
+    1337,
+    2024,
+    77777,
+    20260915
+  ],
+  "max_speed_cap": 360.0
+}
