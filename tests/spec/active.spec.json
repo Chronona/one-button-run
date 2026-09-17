@@ -17,5 +17,21 @@
   ],
   "required_export_presets": [
     "Web"
-  ]
+  ],
+  "grace_seconds": 1.2,
+  "grace_seconds_min": 1.0,
+  "idle_death_max_seconds": 10.0,
+  "bot": "res://tests/bots/runner_bot.gd",
+  "bot_min_survival_seconds": 180.0,
+  "bot_seeds": [
+    1,
+    7,
+    42,
+    555,
+    1337,
+    2024,
+    77777,
+    20260915
+  ],
+  "max_speed_cap": 600.0
 }
