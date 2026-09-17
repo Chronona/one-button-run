@@ -14,6 +14,7 @@ var on_ground: bool = true
 const FLOOR_Y := 550.0
 const START_X := 100.0
 const JUMP_CUT_MULTIPLIER := 0.5
+const BODY_SIZE := Vector2(50, 50)
 
 func reset() -> void:
 	position = Vector2(START_X, FLOOR_Y)
@@ -21,9 +22,17 @@ func reset() -> void:
 	is_jumping = false
 	on_ground = true
 
-func update(delta: float) -> void:
-	_try_jump()
-	_cut_jump_on_release()
+func get_body_rect() -> Rect2:
+	return Rect2(position, BODY_SIZE)
+
+
+# 入力と時間は必ず引数で注入する。Input シングルトンを直接参照しないので、
+# 固定タイムステップのヘッドレス再生が完全に決定論的になる。
+func update(delta: float, act_pressed: bool, act_released: bool) -> void:
+	if act_pressed:
+		_try_jump()
+	if act_released:
+		_cut_jump()
 	_apply_gravity(delta)
 
 	position.y += velocity_y * delta
@@ -39,16 +48,16 @@ func update(delta: float) -> void:
 			landed.emit(position + Vector2(25, 50))
 
 func _try_jump() -> void:
-	if Input.is_action_just_pressed("jump") and on_ground:
-		velocity_y = jump_force
-		is_jumping = true
-		on_ground = false
-		jumped.emit(position + Vector2(25, 50))
+	if not on_ground:
+		return
+	velocity_y = jump_force
+	is_jumping = true
+	on_ground = false
+	jumped.emit(position + Vector2(25, 50))
 
-func _cut_jump_on_release() -> void:
-	if Input.is_action_just_released("jump"):
-		if is_jumping and velocity_y < 0.0:
-			velocity_y *= JUMP_CUT_MULTIPLIER # 上昇中のみ短くジャンプ
+func _cut_jump() -> void:
+	if is_jumping and velocity_y < 0.0:
+		velocity_y *= JUMP_CUT_MULTIPLIER # 上昇中のみ短くジャンプ
 
 func _apply_gravity(delta: float) -> void:
 	velocity_y += gravity * delta
