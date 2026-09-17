@@ -42,6 +42,22 @@ else
 fi
 echo ""
 
+echo "== uid scan (.gd without a matching .uid)"
+# Godot 4.4 以降は .gd ごとに .uid を作る。追跡漏れがあると、import を実行した人の
+# 作業ツリーに毎回未追跡ファイルが現れ、環境ごとに違う UID が振られる。
+missing_uid=""
+for gd in $(find . -name '*.gd' -not -path './.godot/*' | sort); do
+  [ -f "$gd.uid" ] || missing_uid="$missing_uid $gd.uid"
+done
+if [ -z "$missing_uid" ]; then
+  echo "(clean)"
+else
+  for u in $missing_uid; do echo "  missing: $u"; done
+  echo "ERROR: 上記の .uid がありません。'$GODOT_BIN --headless --path . --import' で生成し、コミットに含めてください。" >&2
+  exit 1
+fi
+echo ""
+
 echo "== contract (L0) + regression (L2) tests"
 if command -v "$GODOT_BIN" >/dev/null 2>&1; then
   "$PROJECT_DIR/scripts/test.sh"
