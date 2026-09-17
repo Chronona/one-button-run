@@ -11,7 +11,7 @@ extends RefCounted
 # active なモードだけでなく登録されている全モードを検査するので、
 # 「active を戻すだけで巻き戻せる」という前提が保たれていることを毎回確認できる。
 
-const REGISTRY_PATH := "res://modes/registry.json"
+const MODE_REGISTRY := preload("res://core/mode_registry.gd")
 
 # 新しいモードが同梱しなければならない契約値。ここが欠けていると
 # test_playability.gd が「遊べるか」を判定できない。
@@ -25,10 +25,12 @@ const REQUIRED_SPEC_KEYS := [
 ]
 
 func run(reporter: RefCounted, _tree: SceneTree, _spec: Dictionary) -> void:
+	# 解決そのものは core/mode_registry.gd に任せるが、失敗を黙って空に畳まれると
+	# 原因を名指しできない。ここだけは null を返す方の API を使う。
 	reporter.begin_case("registry.json が読める")
-	if not reporter.check(FileAccess.file_exists(REGISTRY_PATH), "registry.json がない"):
+	if not reporter.check(FileAccess.file_exists(MODE_REGISTRY.REGISTRY_PATH), "registry.json がない"):
 		return
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(REGISTRY_PATH))
+	var parsed: Variant = MODE_REGISTRY.read_json_or_null(MODE_REGISTRY.REGISTRY_PATH)
 	if not reporter.check(parsed is Dictionary, "registry.json が JSON オブジェクトではない"):
 		return
 	var registry: Dictionary = parsed
@@ -55,7 +57,7 @@ func run(reporter: RefCounted, _tree: SceneTree, _spec: Dictionary) -> void:
 		if not reporter.check(spec_path != "" and FileAccess.file_exists(spec_path),
 				"spec が見つからない: '%s'" % spec_path):
 			continue
-		var mode_spec: Variant = JSON.parse_string(FileAccess.get_file_as_string(spec_path))
+		var mode_spec: Variant = MODE_REGISTRY.read_json_or_null(spec_path)
 		if not reporter.check(mode_spec is Dictionary, "spec が JSON オブジェクトではない"):
 			continue
 

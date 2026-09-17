@@ -15,12 +15,12 @@ extends RefCounted
 # いるため自動フローからは更新できない。意図的なバランス変更のときだけ、人間が
 # scripts/record-golden.sh で記録し直す。
 
-const REGISTRY_PATH := "res://modes/registry.json"
 const GOLDEN_DIR := "res://tests/golden"
+const MODE_REGISTRY := preload("res://core/mode_registry.gd")
 const REPLAY := preload("res://tests/support/replay.gd")
 
 func run(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
-	var active := _active_mode_id()
+	var active: String = MODE_REGISTRY.active_id()
 	var golden_path := "%s/%s.json" % [GOLDEN_DIR, active]
 
 	if not FileAccess.file_exists(golden_path):
@@ -78,9 +78,3 @@ func run(reporter: RefCounted, tree: SceneTree, spec: Dictionary) -> void:
 		reporter.check(absi(got_acts - want_acts) <= act_tolerance,
 			"操作回数が変わった＝体感が変わっている (記録=%d 実測=%d 許容=±%d)"
 				% [want_acts, got_acts, act_tolerance])
-
-func _active_mode_id() -> String:
-	if not FileAccess.file_exists(REGISTRY_PATH):
-		return ""
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(REGISTRY_PATH))
-	return (parsed as Dictionary).get("active", "") if parsed is Dictionary else ""
