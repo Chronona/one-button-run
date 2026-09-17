@@ -1,0 +1,46 @@
+{
+  "act_count_tolerance": 1,
+  "checkpoints_seconds": [
+    10.0,
+    30.0,
+    60.0,
+    120.0,
+    180.0
+  ],
+  "difficulty_tolerance": 1.0,
+  "mode": "flappy",
+  "note": "決定論リプレイの基準値。バランス調整で意図的にカーブを変えたときだけ、scripts/record-golden.sh で記録し直す。",
+  "samples": [
+    {
+      "act_count": 8,
+      "alive": true,
+      "difficulty": 192.0,
+      "t": 10.0
+    },
+    {
+      "act_count": 23,
+      "alive": true,
+      "difficulty": 215.999999999999,
+      "t": 30.0
+    },
+    {
+      "act_count": 47,
+      "alive": true,
+      "difficulty": 251.999999999997,
+      "t": 60.0
+    },
+    {
+      "act_count": 93,
+      "alive": true,
+      "difficulty": 323.999999999993,
+      "t": 120.0
+    },
+    {
+      "act_count": 143,
+      "alive": true,
+      "difficulty": 360.0,
+      "t": 180.0
+    }
+  ],
+  "seed": 424242
+}
