@@ -66,6 +66,7 @@ godot --headless --path . --script res://tests/run_tests.gd
 | `core/` | ジャンルが変わっても不変な部分。状態機械、スコアとハイスコア、唯一の入力経路、モードの読み込み |
 | `modes/` | 実際のゲームプレイ。`registry.json` の `active` が有効なモードを指す |
 | `tests/` | L0 契約テスト（`contract/`）、L2 回帰検出（`regression/`）と実行基盤 |
+| `docs/` | 設計判断の記録（`adr/`）と、未実装のゲームモードの企画書（`proposals/`） |
 
 `registry.json` の解決（`active` が指すモードの `scene` / `spec` / `bot`）は
 `core/mode_registry.gd` に一本化してあり、ホストもテストも同じ経路を通ります。
@@ -78,8 +79,14 @@ godot --headless --path . --script res://tests/run_tests.gd
 | ワークフロー | 実行 | 内容 |
 | --- | --- | --- |
 | `auto-improve.yml` | 毎日 06:00 JST | 小さな安全な改善を1件。射程は `modes/` 配下 |
-| `weekly-update.yml` | 毎週月曜 07:00 JST | 新しいジャンルのモードを追加し、`registry.json` の `active` を切り替える |
+| `weekly-update.yml` | 毎週月曜 07:00 JST | 新しいジャンルのモードを追加し、`registry.json` の `active` を切り替える。作るジャンルは `docs/proposals/` の未実装の企画書から選ぶ |
 | `ci.yml` | PR ごと | L0 契約テスト、静的チェック、Web エクスポートの実走 |
+
+`docs/proposals/` に未実装の企画書があるとき、週次更新はジャンルを自分で決めずにその企画書を
+実装します。`mode_id` に対応する `modes/<mode_id>/` が無いものを未実装とみなし、`priority` の
+小さいものから着手します。指示は [ADR 0002 の「週次エージェントへの実行指示」](docs/adr/0002-core-modes-split.md#週次エージェントへの実行指示)
+にあり、経緯は [docs/adr/0006](docs/adr/0006-proposals-as-weekly-input.md) を参照してください。
+ワークフロー定義は変更していないため、この運用をやめるときは ADR 0002 の追記節を消すだけで戻ります。
 
 どちらの自動フローも `core/`・`tests/`・`.github/workflows/` を変更できません（CI の
 `guard` ジョブが落とします）。生成された PR は人間がレビューしてマージします。
