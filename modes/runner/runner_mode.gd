@@ -66,7 +66,7 @@ func mode_start() -> void:
 	game_speed = BASE_SPEED
 	spawn_cooldown = INITIAL_SPAWN_COOLDOWN # 開始直後の猶予
 	# 残っている障害物を掃除（グループで確実に取得）
-	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):
+	for obstacle_node in _live_obstacles():
 		_despawn(obstacle_node)
 	player.reset()
 
@@ -95,10 +95,15 @@ func _on_player_landed() -> void:
 	host.emit_feedback("land")
 
 func _advance_obstacles(delta: float) -> void:
-	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):
+	for obstacle_node in _live_obstacles():
 		obstacle_node.advance(delta)
 		if obstacle_node.is_offscreen():
 			_despawn(obstacle_node)
+
+# 生存中の障害物一覧。取得箇所が3か所に散ると名前のtypoで
+# 幽霊障害物が生まれるので、グループ名の記述はここに一本化する。
+func _live_obstacles() -> Array[Node]:
+	return get_tree().get_nodes_in_group("obstacles")
 
 # グループから即座に外してから解放する。queue_free は次フレームまで残るため、
 # 手動 tick のテストでは外し忘れると幽霊障害物と衝突してしまう。
@@ -108,7 +113,7 @@ func _despawn(obstacle_node: Node) -> void:
 
 func _check_collision() -> void:
 	var player_rect: Rect2 = player.get_body_rect()
-	for obstacle_node in get_tree().get_nodes_in_group("obstacles"):
+	for obstacle_node in _live_obstacles():
 		if player_rect.intersects(obstacle_node.get_body_rect()):
 			_failed = true
 			return
