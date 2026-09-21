@@ -30,6 +30,10 @@ const MAX_GAP_CENTER := 460.0
 const MAX_GAP_STEP := 120.0
 const INITIAL_SPAWN_COOLDOWN := 1.6
 const INITIAL_GAP_Y := 300.0
+# 鳥の傾き（見た目のみ）。物理・当たり判定には使わないので、
+# 値を変えても難易度カーブ（tests/golden/flappy.json）には影響しない。
+const BIRD_TILT_UP := -0.45
+const BIRD_TILT_DOWN := 0.6
 
 const FEEDBACK_MAP := {
 	"act": {"particles": "FlapParticles", "se": "FlapSE"},
@@ -138,4 +142,4 @@ func _check_gate_collision() -> void:
 func _sync_bird() -> void:
 	if bird != null:
 		bird.position = player_pos + PLAYER_SIZE * 0.5
-		bird.rotation = clampf(velocity_y / MAX_FALL_SPEED, -0.45, 0.6)
+		bird.rotation = clampf(velocity_y / MAX_FALL_SPEED, BIRD_TILT_UP, BIRD_TILT_DOWN)
