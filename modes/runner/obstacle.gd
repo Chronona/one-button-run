@@ -7,7 +7,7 @@ const BODY_SIZE := Vector2(40, 40)
 
 func _ready() -> void:
 	add_to_group("obstacles")
-	# 時間はホスト（main.gd）が注入する。自前の _process は持たない。
+	# 時間はモード（runner_mode.gd）が注入する。自前の更新関数は持たない。
 	set_process(false)
 
 func advance(delta: float) -> void:
