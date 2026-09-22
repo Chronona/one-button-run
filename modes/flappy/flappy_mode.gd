@@ -30,6 +30,9 @@ const MAX_GAP_CENTER := 460.0
 const MAX_GAP_STEP := 120.0
 const INITIAL_SPAWN_COOLDOWN := 1.6
 const INITIAL_GAP_Y := 300.0
+# 鳥の見た目の傾き範囲（物理には影響しない表示専用の値）。
+const BIRD_TILT_UP := -0.45
+const BIRD_TILT_DOWN := 0.6
 
 const FEEDBACK_MAP := {
 	"act": {"particles": "FlapParticles", "se": "FlapSE"},
@@ -74,8 +77,7 @@ func mode_start() -> void:
 	_last_gap_y = INITIAL_GAP_Y
 	player_pos = Vector2(PLAYER_X, START_Y)
 	velocity_y = 0.0
-	for gate_node in get_tree().get_nodes_in_group("gates"):
-		_despawn(gate_node)
+	_clear_all_gates()
 	_sync_bird()
 
 func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
@@ -122,6 +124,12 @@ func _advance_gates(delta: float) -> void:
 		if gate_node.is_offscreen():
 			_despawn(gate_node)
 
+# ラウンド開始時の掃除用。進行中の破棄と同一手順にまとめて、
+# 掃除漏れによる幽霊ゲートとの衝突を防ぐ。
+func _clear_all_gates() -> void:
+	for gate_node in get_tree().get_nodes_in_group("gates"):
+		_despawn(gate_node)
+
 # queue_free は次フレームまで残るため、グループから先に外す。
 # 手動 tick のテストでは外し忘れると幽霊ゲートと衝突してしまう。
 func _despawn(gate_node: Node) -> void:
@@ -138,4 +146,4 @@ func _check_gate_collision() -> void:
 func _sync_bird() -> void:
 	if bird != null:
 		bird.position = player_pos + PLAYER_SIZE * 0.5
-		bird.rotation = clampf(velocity_y / MAX_FALL_SPEED, -0.45, 0.6)
+		bird.rotation = clampf(velocity_y / MAX_FALL_SPEED, BIRD_TILT_UP, BIRD_TILT_DOWN)
