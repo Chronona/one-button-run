@@ -1,0 +1,37 @@
+{
+  "id": "grapple",
+  "description": "振り子グラップルモードの契約値。押下でフック（振り子化）、解放で射出。地面に触れたら失敗。難易度はスクロール速度。",
+  "act_semantics": "hook-and-release",
+  "input_isolated_scripts": [
+    "res://modes/grapple/grapple_mode.gd",
+    "res://modes/grapple/anchor.gd"
+  ],
+  "required_feedback_events": [
+    "act",
+    "fail",
+    "record"
+  ],
+  "dual_channel_feedback_events": [
+    "act",
+    "fail"
+  ],
+  "required_export_presets": [
+    "Web"
+  ],
+  "grace_seconds": 1.2,
+  "grace_seconds_min": 1.0,
+  "idle_death_max_seconds": 10.0,
+  "bot": "res://modes/grapple/bot.gd",
+  "bot_min_survival_seconds": 180.0,
+  "bot_seeds": [
+    1,
+    7,
+    42,
+    555,
+    1337,
+    2024,
+    77777,
+    20260915
+  ],
+  "max_speed_cap": 420.0
+}

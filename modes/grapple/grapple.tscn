@@ -1,0 +1,128 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://modes/grapple/grapple_mode.gd" id="1_1"]
+[ext_resource type="Texture2D" path="res://assets/particles/dot.png" id="1_2"]
+[ext_resource type="AudioStreamWAV" path="res://assets/se/jump.wav" id="1_3"]
+[ext_resource type="AudioStreamWAV" path="res://assets/se/gameover.wav" id="1_4"]
+[ext_resource type="AudioStreamWAV" path="res://assets/se/highscore.wav" id="1_5"]
+
+[node name="GrappleMode" type="Node2D"]
+script = ExtResource("1_1")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.12, 0.06, 0.22, 1)
+
+[node name="GlowBand" type="ColorRect" parent="."]
+offset_top = 380.0
+offset_right = 1152.0
+offset_bottom = 560.0
+color = Color(0.30, 0.12, 0.38, 1)
+
+[node name="Star1" type="Polygon2D" parent="."]
+position = Vector2(250, 200)
+polygon = PackedVector2Array(6, 0, 0, -6, -6, 0, 0, 6)
+color = Color(0.65, 0.85, 1, 1)
+
+[node name="Star2" type="Polygon2D" parent="."]
+position = Vector2(600, 260)
+polygon = PackedVector2Array(6, 0, 0, -6, -6, 0, 0, 6)
+color = Color(0.65, 0.85, 1, 1)
+
+[node name="Star3" type="Polygon2D" parent="."]
+position = Vector2(850, 180)
+polygon = PackedVector2Array(6, 0, 0, -6, -6, 0, 0, 6)
+color = Color(0.65, 0.85, 1, 1)
+
+[node name="Moon" type="Polygon2D" parent="."]
+position = Vector2(950, 320)
+polygon = PackedVector2Array(46, 0, 32, -32, 0, -46, -32, -32, -46, 0, -32, 32, 0, 46, 32, 32)
+color = Color(1, 0.72, 0.35, 1)
+
+[node name="CeilingRail" type="ColorRect" parent="."]
+offset_right = 1152.0
+offset_bottom = 96.0
+color = Color(0.22, 0.14, 0.38, 1)
+
+[node name="CeilingEdge" type="ColorRect" parent="."]
+offset_top = 96.0
+offset_right = 1152.0
+offset_bottom = 104.0
+color = Color(1, 0.75, 0.30, 1)
+
+[node name="Ground" type="ColorRect" parent="."]
+offset_top = 560.0
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.16, 0.08, 0.26, 1)
+
+[node name="GroundEdge" type="ColorRect" parent="."]
+offset_top = 560.0
+offset_right = 1152.0
+offset_bottom = 568.0
+color = Color(1, 0.45, 0.55, 1)
+
+[node name="Player" type="Polygon2D" parent="."]
+position = Vector2(200, 200)
+polygon = PackedVector2Array(18, 0, 9, -15, -9, -15, -18, 0, -9, 15, 9, 15)
+color = Color(1, 0.75, 0.30, 1)
+
+[node name="Rope" type="Line2D" parent="."]
+visible = false
+points = PackedVector2Array(200, 200, 200, 110)
+width = 3.0
+default_color = Color(1, 0.80, 0.40, 1)
+
+[node name="HookSpark" type="Polygon2D" parent="."]
+visible = false
+position = Vector2(200, 110)
+polygon = PackedVector2Array(0, -10, 7, 0, 0, 10, -7, 0)
+color = Color(1, 0.90, 0.60, 1)
+
+[node name="HookParticles" type="CPUParticles2D" parent="."]
+emitting = false
+one_shot = true
+amount = 20.0
+lifetime = 0.45
+explosiveness = 0.4
+direction = Vector2(0, -1)
+spread = 50.0
+gravity = Vector2(0, 250)
+initial_velocity_min = Vector2(-40, -60)
+initial_velocity_max = Vector2(40, 10)
+scale_amount_min = 0.4
+scale_amount_max = 0.9
+texture = ExtResource("1_2")
+color = Color(1, 0.80, 0.40, 1)
+
+[node name="CrashParticles" type="CPUParticles2D" parent="."]
+emitting = false
+one_shot = true
+amount = 50.0
+lifetime = 0.8
+explosiveness = 1.0
+direction = Vector2(0, -1)
+spread = 60.0
+gravity = Vector2(0, 500)
+initial_velocity_min = Vector2(-60, -60)
+initial_velocity_max = Vector2(60, 60)
+scale_amount_min = 0.4
+scale_amount_max = 1.2
+texture = ExtResource("1_2")
+color = Color(1, 0.35, 0.45, 1)
+
+[node name="HookSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_3")
+volume_db = -8.0
+pitch_scale = 1.1
+
+[node name="GameOverSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_4")
+volume_db = -12.0
+pitch_scale = 0.9
+
+[node name="HighScoreSE" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_5")
+volume_db = -6.0
+pitch_scale = 0.9
