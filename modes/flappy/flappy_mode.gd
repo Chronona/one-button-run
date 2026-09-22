@@ -30,7 +30,8 @@ const MAX_GAP_CENTER := 460.0
 const MAX_GAP_STEP := 120.0
 const INITIAL_SPAWN_COOLDOWN := 1.6
 const INITIAL_GAP_Y := 300.0
-# 鳥の見た目の傾き範囲（物理には影響しない表示専用の値）。
+# 鳥の傾き（見た目のみ）。物理・当たり判定には使わないので、
+# 値を変えても難易度カーブ（tests/golden/flappy.json）には影響しない。
 const BIRD_TILT_UP := -0.45
 const BIRD_TILT_DOWN := 0.6
 
