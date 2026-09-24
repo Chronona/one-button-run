@@ -34,6 +34,13 @@ const FIXED_STEP := 1.0 / 60.0
 # 位相の判断は残る（最下点=速く遠く、遅め=高く）が、即死の罠にはならない。
 const RELEASE_PUSH_X := 170.0
 const RELEASE_PUSH_Y := -180.0
+# 機体の傾き（見た目のみ）。物理・当たり判定には使わないので、
+# 値を変えても難易度カーブには影響しない。
+const SWING_TILT_FACTOR := 0.35
+const SWING_TILT_MIN := -0.6
+const SWING_TILT_MAX := 0.6
+const FLY_TILT_UP := -0.45
+const FLY_TILT_DOWN := 0.6
 
 const BASE_SPEED := 200.0
 const SPEED_PER_SECOND := 1.5
@@ -233,9 +240,9 @@ func _sync_visuals() -> void:
 	if player != null:
 		player.position = player_pos
 		if swinging:
-			player.rotation = clampf(swing_omega * 0.35, -0.6, 0.6)
+			player.rotation = clampf(swing_omega * SWING_TILT_FACTOR, SWING_TILT_MIN, SWING_TILT_MAX)
 		else:
-			player.rotation = clampf(fly_velocity.y / MAX_FALL_SPEED, -0.45, 0.6)
+			player.rotation = clampf(fly_velocity.y / MAX_FALL_SPEED, FLY_TILT_UP, FLY_TILT_DOWN)
 	if rope != null:
 		rope.visible = swinging
 		if swinging:
