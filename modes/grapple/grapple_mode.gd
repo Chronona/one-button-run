@@ -108,8 +108,7 @@ func mode_start() -> void:
 	swing_theta = 0.0
 	swing_omega = 0.0
 	swing_elapsed = 0.0
-	for anchor_node in get_tree().get_nodes_in_group("anchors"):
-		_despawn(anchor_node)
+	_clear_all_anchors()
 	for anchor_x in INITIAL_ANCHOR_X:
 		spawn_anchor_at(anchor_x)
 	_sync_visuals()
@@ -146,17 +145,17 @@ func spawn_anchor_at(anchor_x: float) -> void:
 	add_child(anchor_node)
 
 func _try_hook() -> void:
-	var best: Node2D = null
-	var best_dx: float = HOOK_AHEAD + 1.0
+	var closest_anchor: Node2D = null
+	var closest_dx: float = HOOK_AHEAD + 1.0
 	for anchor_node in get_tree().get_nodes_in_group("anchors"):
 		var dx: float = anchor_node.position.x - player_pos.x
-		if dx >= HOOK_BACK and dx <= HOOK_AHEAD and dx < best_dx:
-			best = anchor_node
-			best_dx = dx
-	if best == null:
+		if _is_in_hook_range(dx) and dx < closest_dx:
+			closest_anchor = anchor_node
+			closest_dx = dx
+	if closest_anchor == null:
 		return
 	# 支点は掛けた瞬間の位置で凍結する。以後は支点を中心とする振り子になる。
-	pivot = best.position
+	pivot = closest_anchor.position
 	var offset := player_pos - pivot
 	var distance := offset.length()
 	rope_length = clampf(distance, ROPE_MIN, ROPE_MAX)
@@ -220,6 +219,16 @@ func _despawn(anchor_node: Node) -> void:
 	anchor_node.remove_from_group("anchors")
 	anchor_node.queue_free()
 
+# ラウンド開始時の掃除用。進行中の破棄と同一手順にまとめて、
+# 掃除漏れによる幽霊アンカーへのフックを防ぐ。
+func _clear_all_anchors() -> void:
+	for anchor_node in get_tree().get_nodes_in_group("anchors"):
+		_despawn(anchor_node)
+
+# フック可能な相対位置か。掛けるときと狙い目の表示で同じ判定を使う。
+func _is_in_hook_range(dx: float) -> bool:
+	return dx >= HOOK_BACK and dx <= HOOK_AHEAD
+
 func _sync_visuals() -> void:
 	if player != null:
 		player.position = player_pos
@@ -240,6 +249,6 @@ func _sync_visuals() -> void:
 func _update_anchor_highlight() -> void:
 	for anchor_node in get_tree().get_nodes_in_group("anchors"):
 		var dx: float = anchor_node.position.x - player_pos.x
-		var in_range := (not swinging) and dx >= HOOK_BACK and dx <= HOOK_AHEAD
+		var in_range := (not swinging) and _is_in_hook_range(dx)
 		if anchor_node.has_method("set_highlight"):
 			anchor_node.set_highlight(in_range)
