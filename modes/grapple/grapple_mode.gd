@@ -146,12 +146,12 @@ func spawn_anchor_at(anchor_x: float) -> void:
 
 func _try_hook() -> void:
 	var closest_anchor: Node2D = null
-	var closest_dx: float = HOOK_AHEAD + 1.0
+	var nearest_ahead_dx: float = HOOK_AHEAD + 1.0
 	for anchor_node in get_tree().get_nodes_in_group("anchors"):
 		var dx: float = anchor_node.position.x - player_pos.x
-		if _is_in_hook_range(dx) and dx < closest_dx:
+		if _is_in_hook_range(dx) and dx < nearest_ahead_dx:
 			closest_anchor = anchor_node
-			closest_dx = dx
+			nearest_ahead_dx = dx
 	if closest_anchor == null:
 		return
 	# 支点は掛けた瞬間の位置で凍結する。以後は支点を中心とする振り子になる。
@@ -160,7 +160,7 @@ func _try_hook() -> void:
 	var distance := offset.length()
 	rope_length = clampf(distance, ROPE_MIN, ROPE_MAX)
 	swing_theta = atan2(offset.x, offset.y)
-	var tangent := Vector2(cos(swing_theta), -sin(swing_theta))
+	var tangent := _swing_tangent()
 	swing_omega = clampf(fly_velocity.dot(tangent) / rope_length, -4.0, 4.0)
 	swing_elapsed = 0.0
 	_accum = 0.0
@@ -168,28 +168,27 @@ func _try_hook() -> void:
 	host.emit_feedback("act")
 
 func _release() -> void:
-	var tangent := Vector2(cos(swing_theta), -sin(swing_theta))
-	var release_vel := tangent * (rope_length * swing_omega)
+	var tangent := _swing_tangent()
+	var tangential_velocity := tangent * (rope_length * swing_omega)
 	fly_velocity = Vector2(
-		clampf(release_vel.x + RELEASE_PUSH_X, -120.0, 560.0),
-		clampf(release_vel.y + RELEASE_PUSH_Y, -660.0, 420.0))
+		clampf(tangential_velocity.x + RELEASE_PUSH_X, -120.0, 560.0),
+		clampf(tangential_velocity.y + RELEASE_PUSH_Y, -660.0, 420.0))
 	swinging = false
 
 func _integrate_swing(delta: float) -> void:
 	_accum += delta
-	var guard := 0
-	while _accum >= FIXED_STEP and guard < 8:
+	var step_guard := 0
+	while _accum >= FIXED_STEP and step_guard < 8:
 		swing_omega += -(GRAVITY_SWING / rope_length) * sin(swing_theta) * FIXED_STEP
 		swing_theta += swing_omega * FIXED_STEP
 		rope_length = minf(rope_length + ROPE_EXTEND_RATE * FIXED_STEP, ROPE_MAX)
 		swing_elapsed += FIXED_STEP
 		_accum -= FIXED_STEP
-		guard += 1
-	if guard >= 8:
+		step_guard += 1
+	if step_guard >= 8:
 		_accum = 0.0
 	player_pos = pivot + rope_length * Vector2(sin(swing_theta), cos(swing_theta))
-	if player_pos.y < CEIL_Y:
-		player_pos.y = CEIL_Y
+	_clamp_ceiling_position()
 
 func _integrate_fly(delta: float) -> void:
 	fly_velocity.y = minf(fly_velocity.y + GRAVITY_FLY * delta, MAX_FALL_SPEED)
@@ -203,8 +202,7 @@ func _integrate_fly(delta: float) -> void:
 	if player_pos.x > X_MAX:
 		player_pos.x = X_MAX
 		fly_velocity.x = minf(fly_velocity.x, 0.0)
-	if player_pos.y < CEIL_Y:
-		player_pos.y = CEIL_Y
+	if _clamp_ceiling_position():
 		fly_velocity.y = maxf(fly_velocity.y, 0.0)
 
 func _advance_anchors(delta: float) -> void:
@@ -228,6 +226,18 @@ func _clear_all_anchors() -> void:
 # フック可能な相対位置か。掛けるときと狙い目の表示で同じ判定を使う。
 func _is_in_hook_range(dx: float) -> bool:
 	return dx >= HOOK_BACK and dx <= HOOK_AHEAD
+
+# 振り子の接線方向。フック時の初速変換と解放時の射出速度で同じ向きを使う。
+func _swing_tangent() -> Vector2:
+	return Vector2(cos(swing_theta), -sin(swing_theta))
+
+# 天井の突き抜け防止。振り子と飛行で同じ位置クランプを使う。
+# 飛行側は戻り値が真のときだけ上昇速度を消す（元の挙動と同一）。
+func _clamp_ceiling_position() -> bool:
+	if player_pos.y < CEIL_Y:
+		player_pos.y = CEIL_Y
+		return true
+	return false
 
 func _sync_visuals() -> void:
 	if player != null:
