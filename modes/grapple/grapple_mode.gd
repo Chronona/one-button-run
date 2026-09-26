@@ -145,17 +145,17 @@ func spawn_anchor_at(anchor_x: float) -> void:
 	add_child(anchor_node)
 
 func _try_hook() -> void:
-	var closest_anchor: Node2D = null
+	var closest: Node2D = null
 	var closest_dx: float = HOOK_AHEAD + 1.0
 	for anchor_node in get_tree().get_nodes_in_group("anchors"):
 		var dx: float = anchor_node.position.x - player_pos.x
 		if _is_in_hook_range(dx) and dx < closest_dx:
-			closest_anchor = anchor_node
+			closest = anchor_node
 			closest_dx = dx
-	if closest_anchor == null:
+	if closest == null:
 		return
 	# 支点は掛けた瞬間の位置で凍結する。以後は支点を中心とする振り子になる。
-	pivot = closest_anchor.position
+	pivot = closest.position
 	var offset := player_pos - pivot
 	var distance := offset.length()
 	rope_length = clampf(distance, ROPE_MIN, ROPE_MAX)
@@ -252,3 +252,8 @@ func _update_anchor_highlight() -> void:
 		var in_range := (not swinging) and _is_in_hook_range(dx)
 		if anchor_node.has_method("set_highlight"):
 			anchor_node.set_highlight(in_range)
+
+# フック可能な相対位置か。掛け判定と狙い目ハイライトで共有し、
+# 範囲の二重定義によるズレを防ぐ。
+func _is_in_hook_range(dx: float) -> bool:
+	return dx >= HOOK_BACK and dx <= HOOK_AHEAD
