@@ -108,8 +108,7 @@ func mode_start() -> void:
 	swing_theta = 0.0
 	swing_omega = 0.0
 	swing_elapsed = 0.0
-	for anchor_node in get_tree().get_nodes_in_group("anchors"):
-		_despawn(anchor_node)
+	_clear_all_anchors()
 	for anchor_x in INITIAL_ANCHOR_X:
 		spawn_anchor_at(anchor_x)
 	_sync_visuals()
@@ -219,6 +218,16 @@ func _advance_anchors(delta: float) -> void:
 func _despawn(anchor_node: Node) -> void:
 	anchor_node.remove_from_group("anchors")
 	anchor_node.queue_free()
+
+# ラウンド開始時の掃除用。進行中の破棄と同一手順にまとめて、
+# 掃除漏れによる幽霊アンカーへのフックを防ぐ。
+func _clear_all_anchors() -> void:
+	for anchor_node in get_tree().get_nodes_in_group("anchors"):
+		_despawn(anchor_node)
+
+# フック可能な相対位置か。掛けるときと狙い目の表示で同じ判定を使う。
+func _is_in_hook_range(dx: float) -> bool:
+	return dx >= HOOK_BACK and dx <= HOOK_AHEAD
 
 func _sync_visuals() -> void:
 	if player != null:
