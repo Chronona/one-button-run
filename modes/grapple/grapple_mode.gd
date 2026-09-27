@@ -100,7 +100,9 @@ func get_player() -> Node:
 	return self
 
 func get_body_rect() -> Rect2:
-	return Rect2(player_pos - Vector2(18, 18), Vector2(36, 36))
+	# 当たり判定は見た目の中心 36x36 と一致する。FEEDBACK_OFFSET(=18,18) は
+	# その半分の大きさなので、数値を二重に書かず流用する（挙動は同一）。
+	return Rect2(player_pos - FEEDBACK_OFFSET, FEEDBACK_OFFSET * 2.0)
 
 func mode_start() -> void:
 	_elapsed = 0.0
