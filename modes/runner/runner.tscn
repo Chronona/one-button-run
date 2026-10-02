@@ -48,9 +48,10 @@ position = Vector2(100, 550)
 script = ExtResource("1_2")
 
 [node name="Sprite" type="Sprite2D" parent="Player"]
-position = Vector2(0, 0)
+position = Vector2(25, 50)
 texture = ExtResource("1_3")
 centered = false
+offset = Vector2(-25, -50)
 
 [node name="Ground" type="Node2D" parent="."]
 position = Vector2(0, 600)
