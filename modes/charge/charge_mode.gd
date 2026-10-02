@@ -255,7 +255,11 @@ func _check_shell_hit(pos: Vector2) -> void:
 
 # 本体を残し、速度を ± 回転した弾を足す。3分裂は左右、2分裂は上側だけ。
 func _split_shell() -> void:
-	var angles: Array[float] = [SPLIT_SPREAD, -SPLIT_SPREAD] if _shot_split >= 3 else [SPLIT_SPREAD]
+	var angles: Array[float] = []
+	if _shot_split >= 3:
+		angles.assign([SPLIT_SPREAD, -SPLIT_SPREAD])
+	else:
+		angles.assign([SPLIT_SPREAD])
 	for angle in angles:
 		var node: Polygon2D = shell.duplicate()
 		add_child(node)
