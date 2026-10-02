@@ -31,6 +31,11 @@ func is_failed() -> bool:
 # 加点したいときは host.add_score(points) を呼ぶ（ADR 0009）。スコアの所有者はホストで、
 # モードは点数を渡すだけ。PLAYING 中の正の値以外は無視される。
 
+# 経過時間をスコアに加算するか（ADR 0010）。既定は加算する（生存時間がスコアのモード向け）。
+# false を返すモードは、host.add_score() だけがスコアの入口になる。
+func scores_by_time() -> bool:
+	return true
+
 # 難易度の現在値。単位はモードごとに異なってよい（ランナーなら速度）。
 # 契約テストは「単調非減少かつ上限つき」であることだけを見る。
 func get_difficulty() -> float:

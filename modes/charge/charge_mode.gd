@@ -5,6 +5,7 @@ extends "res://core/game_mode.gd"
 # 遊び方: 押している間に角度メーターが往復し、同時にパワーが溜まる。
 # 離した瞬間の角度とパワーで弾が飛ぶ。標的に当てると残弾が戻る。
 # 押さずにいると見送りで残弾が減り、残弾が尽きると終わり。
+# スコアは標的を1つ壊すごとに加点される（時間では増えない）。
 # 標的を全破壊すると次のステージへ進み、角度メーターが速くなる。
 # ステージを少ない投擲数で破壊するほど、次ステージの弾は発射後に分裂する
 # （1発で3分裂、2発で2分裂、3発以上は分裂なし。ADR 0008）。
@@ -54,6 +55,9 @@ const TARGET_Y_MAX := 480.0
 const TARGET_MIN_SEPARATION := 130.0
 const TARGET_PLACE_TRIES := 40
 
+# スコアは標的の破壊でだけ入る。経過時間では加算しない（ADR 0010）。
+const TARGET_SCORE := 100.0
+
 const FEEDBACK_MAP := {
 	"act": {"particles": "ShootParticles", "se": "ShootSE"},
 	"fail": {"particles": "CrashParticles", "se": "GameOverSE"},
@@ -95,6 +99,9 @@ func get_feedback_map() -> Dictionary:
 
 func get_difficulty() -> float:
 	return omega
+
+func scores_by_time() -> bool:
+	return false
 
 func is_failed() -> bool:
 	return _failed
@@ -271,6 +278,7 @@ func _hit_target(target_node: Node2D) -> void:
 	var hit_pos: Vector2 = target_node.position
 	_remove_target(target_node)
 	ammo = mini(ammo + 1, MAX_AMMO)
+	host.add_score(TARGET_SCORE)
 	_play_hit(hit_pos)
 	if _live_targets().is_empty():
 		stage += 1
