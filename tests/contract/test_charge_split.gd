@@ -22,6 +22,7 @@ func run(reporter: RefCounted, _tree: SceneTree, spec: Dictionary) -> void:
 	reporter.check(mode.split_count == 1, "split_count=%d" % mode.split_count)
 
 	reporter.begin_case("1発で標的を壊すと次ステージは3分裂、発射後に弾が増える")
+	harness.main.start_game()
 	var target: Node2D = mode.get_tree().get_nodes_in_group("targets")[0]
 	var stage_before: int = mode.stage
 	# 標的を砲口の真正面に置き、弾が確実に当たる位置へ動かす。
