@@ -103,6 +103,25 @@ godot --headless --path . --script res://tests/run_tests.gd
 週次更新が不調だった場合は、`modes/registry.json` の `active` を前のモード ID に戻せば
 巻き戻せます。旧モードは削除されません。
 
+## ブランチとリリース
+
+ブランチ運用は GitHub Flow です（経緯は [docs/adr/0007](docs/adr/0007-github-flow-and-semver-tags.md)）。
+`main` から `feat/`・`fix/`・`refactor/`・`docs/`・`chore/` のいずれかを接頭辞にしたブランチを切り、PR でマージします。
+
+### リリース（タグ付け）
+
+マージ済みの `main` に `vMAJOR.MINOR.PATCH` の注釈付きタグを打ちます。週次アップデート（モード追加・`active` 切り替え）は MINOR、それ以外は PATCH を上げます。MAJOR は当面 `0` です。
+
+```sh
+git switch main && git pull origin main
+git describe --tags --abbrev=0        # 直前のタグを確認（初回はタグが無いので v0.1.0 を使う）
+git tag -a v0.2.0 -m "v0.2.0: <変更の要約>"
+git push origin v0.2.0
+```
+
+push 後、GitHub の Releases で **Draft a new release** → 作成したタグを選択 → **Generate release notes** で公開します。
+タグを打ち間違えたときは、push 前なら `git tag -d <tag>` で消せます。
+
 ## ライセンス
 
 MIT License
