@@ -18,6 +18,7 @@ enum GameState {
 }
 
 signal feedback_emitted(event_name: String)
+signal game_started
 
 @onready var score_label: Label = $ScoreLabel
 @onready var high_score_label: Label = $HighScoreLabel
@@ -183,6 +184,7 @@ func start_game() -> void:
 		_mode.mode_start()
 	update_ui()
 	game_over_label.hide()
+	game_started.emit()
 
 func game_over() -> void:
 	if state != GameState.PLAYING:

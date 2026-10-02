@@ -13,6 +13,10 @@ var velocity_y: float = 0.0
 var is_jumping: bool = false
 var on_ground: bool = true
 
+@onready var sprite: Sprite2D = $Sprite
+
+var _squash_tween: Tween
+
 const FLOOR_Y := 550.0
 const START_X := 100.0
 const JUMP_CUT_MULTIPLIER := 0.5
@@ -20,12 +24,31 @@ const BODY_SIZE := Vector2(50, 50)
 # ジャンプ・着地エフェクトの発生位置（プレイヤー矩形の足元中央）。
 # runner_mode.get_feedback_position() が参照する。
 const FEEDBACK_OFFSET := Vector2(25, 50)
+# ジャンプで縦に伸び、着地で横に潰れる。Sprite は足元を原点にしてあるので、足は浮かない。
+const JUMP_STRETCH := Vector2(0.8, 1.25)
+const LAND_SQUASH := Vector2(1.3, 0.7)
+const SQUASH_RECOVER_SEC := 0.2
 
 func reset() -> void:
 	position = Vector2(START_X, FLOOR_Y)
 	velocity_y = 0.0
 	is_jumping = false
 	on_ground = true
+	_reset_squash()
+
+# 見た目だけの伸縮。当たり判定（get_body_rect）と物理には影響しない。
+func _squash(target_scale: Vector2) -> void:
+	if _squash_tween != null:
+		_squash_tween.kill()
+	sprite.scale = target_scale
+	_squash_tween = create_tween()
+	var recover := _squash_tween.tween_property(sprite, "scale", Vector2.ONE, SQUASH_RECOVER_SEC)
+	recover.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _reset_squash() -> void:
+	if _squash_tween != null:
+		_squash_tween.kill()
+	sprite.scale = Vector2.ONE
 
 func get_body_rect() -> Rect2:
 	return Rect2(position, BODY_SIZE)
@@ -54,6 +77,7 @@ func update(delta: float, act_pressed: bool, act_released: bool) -> void:
 		is_jumping = false
 		velocity_y = 0.0
 		if was_airborne:
+			_squash(LAND_SQUASH)
 			landed.emit()
 
 func _try_jump() -> void:
@@ -62,6 +86,7 @@ func _try_jump() -> void:
 	velocity_y = jump_force
 	is_jumping = true
 	on_ground = false
+	_squash(JUMP_STRETCH)
 	jumped.emit()
 
 func _cut_jump() -> void:
