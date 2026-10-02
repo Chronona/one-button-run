@@ -136,6 +136,11 @@ func _clear_all_gates() -> void:
 	for gate_node in _live_gates():
 		_despawn(gate_node)
 
+# 生存中のゲート一覧。取得箇所が3か所に散ると名前のtypoで
+# 幽霊ゲートが生まれるので、グループ名の記述はここに一本化する。
+func _live_gates() -> Array[Node]:
+	return get_tree().get_nodes_in_group("gates")
+
 # queue_free は次フレームまで残るため、グループから先に外す。
 # 手動 tick のテストでは外し忘れると幽霊ゲートと衝突してしまう。
 func _despawn(gate_node: Node) -> void:
@@ -143,13 +148,20 @@ func _despawn(gate_node: Node) -> void:
 	gate_node.queue_free()
 
 func _check_gate_collision() -> void:
-	var player_body_rect := get_body_rect()
+	var body := get_body_rect()
 	for gate_node in _live_gates():
-		if gate_node.collides_with(player_body_rect):
+		if gate_node.collides_with(body):
 			_failed = true
 			return
 
 func _sync_bird() -> void:
-	if bird != null:
-		bird.position = player_pos + PLAYER_SIZE * 0.5
-		bird.rotation = clampf(velocity_y / MAX_FALL_SPEED, BIRD_TILT_UP, BIRD_TILT_DOWN)
+	if bird == null:
+		return
+	bird.position = player_pos + PLAYER_SIZE * 0.5
+	bird.rotation = _compute_bird_tilt()
+
+# 鳥の傾きは見た目のみ。物理・当たり判定には使わないため、
+# ここを変更しても難易度カーブ（tests/golden/flappy.json）には影響しない。
+func _compute_bird_tilt() -> float:
+	var normalized_fall_speed: float = velocity_y / MAX_FALL_SPEED
+	return clampf(normalized_fall_speed, BIRD_TILT_UP, BIRD_TILT_DOWN)
