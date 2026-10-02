@@ -63,7 +63,7 @@ godot --headless --path . --script res://tests/run_tests.gd
 
 | ディレクトリ | 役割 |
 | --- | --- |
-| `core/` | ジャンルが変わっても不変な部分。状態機械、スコアとハイスコア、唯一の入力経路、モードの読み込み |
+| `core/` | ジャンルが変わっても不変な部分。状態機械、スコアとハイスコア（モードからの加点フック `add_score()` を含む）、唯一の入力経路、モードの読み込み |
 | `modes/` | 実際のゲームプレイ。`registry.json` の `active` が有効なモードを指す |
 | `tests/` | L0 契約テスト（`contract/`）、L2 回帰検出（`regression/`）と実行基盤 |
 | `docs/` | 設計判断の記録（`adr/`）と、未実装のゲームモードの企画書（`proposals/`） |

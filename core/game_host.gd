@@ -167,6 +167,15 @@ func emit_feedback(event_name: String) -> void:
 		_mode.play_feedback(event_name)
 	feedback_emitted.emit(event_name)
 
+# スコア加点のフック。モードが「うまくやった」ことへの報酬をここで渡す。
+# スコアの所有者はホストのままで、モードは点数を足してもらうだけ（読み書きはしない）。
+# PLAYING 中の正の値だけを受け付ける。GAME_OVER 後に呼ばれても記録は動かない。
+func add_score(points: float) -> void:
+	if state != GameState.PLAYING or points <= 0.0:
+		return
+	score += points
+	update_ui()
+
 func start_game() -> void:
 	state = GameState.PLAYING
 	score = 0.0
