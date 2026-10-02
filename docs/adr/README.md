@@ -18,3 +18,4 @@
 | [0004](0004-difficulty-curve-golden.md) | 難易度カーブの回帰検出（決定論リプレイ） | proposed（テストの配置は 0005 が更新） |
 | [0005](0005-test-layout-and-registry-resolution.md) | テスト層のディレクトリ分離と、モードレジストリ解決の一本化 | proposed |
 | [0006](0006-proposals-as-weekly-input.md) | 未実装の企画書を週次アップデートの入力にする | proposed |
+| [0008](0008-charge-split-shot.md) | チャージ投擲: 少ない投擲数で壊すと次ステージで弾が分裂する | proposed |

@@ -9,7 +9,8 @@
   "required_feedback_events": [
     "act",
     "fail",
-    "record"
+    "record",
+    "split"
   ],
   "dual_channel_feedback_events": [
     "act",
