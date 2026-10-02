@@ -36,8 +36,8 @@ func is_offscreen() -> bool:
 func front_x() -> float:
 	return position.x + gate_width
 
-func collides_with(body: Rect2) -> bool:
-	return body.intersects(_top_rect(position.x)) or body.intersects(_bottom_rect(position.x))
+func collides_with(player_body: Rect2) -> bool:
+	return player_body.intersects(_top_rect(position.x)) or player_body.intersects(_bottom_rect(position.x))
 
 func _gap_top() -> float:
 	return gap_center - gap_half
