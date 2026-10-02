@@ -4,7 +4,7 @@ extends "res://core/game_mode.gd"
 #
 # 遊び方: 押している間に角度メーターが往復し、同時にパワーが溜まる。
 # 離した瞬間の角度とパワーで弾が飛ぶ。標的に当てると残弾が戻る。
-# 押さずにいると見送りで残弾が減り、残弾が尽きると終わり。
+# 構えずにいると警告の後に見送りで残弾が減り、残弾が尽きると終わり。
 # スコアは標的を1つ壊すごとに加点される（時間では増えない）。
 # 標的を全破壊すると次のステージへ進み、角度メーターが速くなる。
 # ステージを少ない投擲数で破壊するほど、次ステージの弾は発射後に分裂する
@@ -36,7 +36,9 @@ const SPEED_MAX := 950.0
 const SHOT_GRAVITY := 500.0
 const MAX_HOLD := 2.5
 
-# 構えの制限時間。押さずにいると見送りで残弾を1つ失う。
+# 構えの制限時間。警告を出してから見送りで残弾を1つ失う。
+# 警告なしで減弾すると放置死に見えるため、AIM_WARN_TIME で先に知らせる。
+const AIM_WARN_TIME := 1.0
 const AIM_TIMEOUT := 1.8
 const START_AMMO := 5
 const MAX_AMMO := 5
@@ -114,6 +116,9 @@ func is_flying() -> bool:
 
 func is_aiming() -> bool:
 	return not charging and not flying and not _failed
+
+func is_aim_warning() -> bool:
+	return is_aiming() and aim_timer >= AIM_WARN_TIME
 
 func get_feedback_position(event_name: String) -> Vector2:
 	if event_name == "act":
@@ -373,3 +378,12 @@ func _sync_visuals() -> void:
 		if charging:
 			var power := charge_power(charge_time)
 			power_fill.offset_right = power_fill.offset_left + 140.0 * power
+	_update_warn_visual()
+
+func _update_warn_visual() -> void:
+	var warning := is_aim_warning()
+	var label := get_node_or_null("WarnLabel") as Label
+	if label != null:
+		label.visible = warning
+	if ammo_label != null:
+		ammo_label.modulate = Color(1.0, 0.4, 0.35) if warning else Color.WHITE

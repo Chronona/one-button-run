@@ -1,6 +1,6 @@
 {
   "id": "charge",
-  "description": "チャージ投擲モードの契約値。押下で構え（角度往復+パワー蓄積）、解放で射出。標的破壊で残弾回復、見送りで残弾減少、尽きると失敗。難易度は角度メーターの角速度。",
+  "description": "チャージ投擲モードの契約値。押下で構え（角度往復+パワー蓄積）、解放で射出。標的破壊で残弾回復、警告後の見送りで残弾減少、尽きると失敗。難易度は角度メーターの角速度。",
   "act_semantics": "charge-and-release",
   "input_isolated_scripts": [
     "res://modes/charge/charge_mode.gd",

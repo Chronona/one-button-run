@@ -88,6 +88,15 @@ offset_right = 160.0
 offset_bottom = 135.0
 text = "Stage: 1"
 
+[node name="WarnLabel" type="Label" parent="."]
+visible = false
+offset_left = 20.0
+offset_top = 135.0
+offset_right = 260.0
+offset_bottom = 160.0
+text = "はやく構えろ！"
+modulate = Color(1, 0.4, 0.35, 1)
+
 [node name="ShootParticles" type="CPUParticles2D" parent="."]
 emitting = false
 one_shot = true
