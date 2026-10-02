@@ -120,7 +120,7 @@ func spawn_gate() -> void:
 	add_child(gate_node)
 
 func _advance_gates(delta: float) -> void:
-	for gate_node in get_tree().get_nodes_in_group("gates"):
+	for gate_node in _live_gates():
 		gate_node.advance(delta)
 		if gate_node.is_offscreen():
 			_despawn(gate_node)
@@ -128,7 +128,7 @@ func _advance_gates(delta: float) -> void:
 # ラウンド開始時の掃除用。進行中の破棄と同一手順にまとめて、
 # 掃除漏れによる幽霊ゲートとの衝突を防ぐ。
 func _clear_all_gates() -> void:
-	for gate_node in get_tree().get_nodes_in_group("gates"):
+	for gate_node in _live_gates():
 		_despawn(gate_node)
 
 # queue_free は次フレームまで残るため、グループから先に外す。
@@ -137,10 +137,15 @@ func _despawn(gate_node: Node) -> void:
 	gate_node.remove_from_group("gates")
 	gate_node.queue_free()
 
+# 生存中のゲート一覧。取得箇所が3か所に散ると名前のtypoで
+# 幽霊ゲートが生まれるので、グループ名の記述はここに一本化する。
+func _live_gates() -> Array[Node]:
+	return get_tree().get_nodes_in_group("gates")
+
 func _check_gate_collision() -> void:
-	var body := get_body_rect()
-	for gate_node in get_tree().get_nodes_in_group("gates"):
-		if gate_node.collides_with(body):
+	var player_body := get_body_rect()
+	for gate_node in _live_gates():
+		if gate_node.collides_with(player_body):
 			_failed = true
 			return
 
