@@ -1,6 +1,6 @@
 {
   "description": "利用可能なゲームモードと、いま有効なモード。週次の大型アップデートは新しいモードを追加して active を切り替える。旧モードは消さないので、事故ったら active を戻すだけで巻き戻せる。",
-  "active": "flappy",
+  "active": "charge",
   "modes": {
     "runner": {
       "scene": "res://modes/runner/runner.tscn",
@@ -13,6 +13,10 @@
     "grapple": {
       "scene": "res://modes/grapple/grapple.tscn",
       "spec": "res://modes/grapple/spec.json"
+    },
+    "charge": {
+      "scene": "res://modes/charge/charge.tscn",
+      "spec": "res://modes/charge/spec.json"
     }
   }
 }
