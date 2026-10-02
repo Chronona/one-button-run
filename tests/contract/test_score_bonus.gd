@@ -36,6 +36,14 @@ func run(reporter: RefCounted, tree: SceneTree, _spec: Dictionary) -> void:
 	main.add_score(100.0)
 	reporter.equal(main.score, 15.0, "GAME_OVER 後に加点された")
 
+	reporter.begin_case("経過時間の加算は scores_by_time() の宣言に従う（ADR 0010）")
+	main.start_game()
+	harness.step(1.0) # 開始直後の猶予内なので、どのモードでも失敗しない
+	if main.get_active_mode().scores_by_time():
+		reporter.check(main.score > 0.9, "時間加算を宣言したモードでスコアが増えない: %.2f" % main.score)
+	else:
+		reporter.equal(main.score, 0.0, "時間加算なしを宣言したモードで経過時間がスコアになった")
+
 	reporter.begin_case("再開で加点分もリセットされる")
 	main.start_game()
 	reporter.equal(main.score, 0.0, "再開後に加点が残っている")

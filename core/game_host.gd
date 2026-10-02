@@ -223,7 +223,8 @@ func tick(delta: float) -> void:
 	if state != GameState.PLAYING or _mode == null:
 		return
 
-	score += delta
+	if _mode.scores_by_time():
+		score += delta
 	_mode.mode_tick(delta, act_pressed, act_released)
 
 	if _mode.is_failed():
