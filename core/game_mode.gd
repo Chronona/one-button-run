@@ -28,6 +28,9 @@ func mode_tick(_delta: float, _act_pressed: bool, _act_released: bool) -> void:
 func is_failed() -> bool:
 	return false
 
+# 加点したいときは host.add_score(points) を呼ぶ（ADR 0009）。スコアの所有者はホストで、
+# モードは点数を渡すだけ。PLAYING 中の正の値以外は無視される。
+
 # 難易度の現在値。単位はモードごとに異なってよい（ランナーなら速度）。
 # 契約テストは「単調非減少かつ上限つき」であることだけを見る。
 func get_difficulty() -> float:
