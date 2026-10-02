@@ -11,6 +11,8 @@ enum GameState {
 @onready var score_label: Label = $ScoreLabel
 @onready var high_score_label: Label = $HighScoreLabel
 @onready var game_over_label: Label = $GameOverLabel
+@onready var camera: Camera2D = $Camera
+@onready var flash_rect: ColorRect = $FlashLayer/FlashRect
 
 var state: GameState = GameState.START
 var score: float = 0.0
@@ -26,6 +28,17 @@ const INITIAL_SPAWN_COOLDOWN := 1.2
 const OBSTACLE_SCENE: PackedScene = preload("res://obstacle.tscn")
 const OBSTACLE_SPAWN_POS := Vector2(1200, 580)
 var spawn_cooldown: float = 1.2
+
+# 衝突時の演出。ヒットストップ中は time_scale が下がるので、時間は実時間（ミリ秒）で測る
+const HITSTOP_TIME_SCALE := 0.05
+const HITSTOP_DURATION_MSEC := 120
+const SHAKE_STRENGTH := 14.0
+const SHAKE_DURATION := 0.35
+const FLASH_ALPHA := 0.6
+const FLASH_DURATION := 0.25
+var hitstop_end_msec: int = 0
+var shake_tween: Tween
+var flash_tween: Tween
 
 func _ready() -> void:
 	_ensure_jump_action()
@@ -85,7 +98,42 @@ func _play_feedback(particles_name: String, se_name: String, pos: Vector2) -> vo
 	if se != null and se.has_method("play"):
 		se.play()
 
+func _start_hitstop() -> void:
+	Engine.time_scale = HITSTOP_TIME_SCALE
+	hitstop_end_msec = Time.get_ticks_msec() + HITSTOP_DURATION_MSEC
+
+func _end_hitstop() -> void:
+	Engine.time_scale = 1.0
+	hitstop_end_msec = 0
+
+func _start_shake(strength: float, duration: float) -> void:
+	if shake_tween != null:
+		shake_tween.kill()
+	shake_tween = create_tween().set_ignore_time_scale(true)
+	# 強さを 1 → 0 に減衰させながら毎フレーム揺らす
+	shake_tween.tween_method(func(t: float) -> void:
+		camera.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * strength * t,
+		1.0, 0.0, duration)
+	shake_tween.tween_callback(func() -> void: camera.offset = Vector2.ZERO)
+
+func _start_flash() -> void:
+	if flash_tween != null:
+		flash_tween.kill()
+	flash_rect.color.a = FLASH_ALPHA
+	flash_tween = create_tween().set_ignore_time_scale(true)
+	flash_tween.tween_property(flash_rect, "color:a", 0.0, FLASH_DURATION)
+
+func _reset_effects() -> void:
+	_end_hitstop()
+	if shake_tween != null:
+		shake_tween.kill()
+	if flash_tween != null:
+		flash_tween.kill()
+	camera.offset = Vector2.ZERO
+	flash_rect.color.a = 0.0
+
 func start_game() -> void:
+	_reset_effects()
 	state = GameState.PLAYING
 	score = 0.0
 	game_speed = BASE_SPEED
@@ -126,6 +174,9 @@ func game_over() -> void:
 
 	# ゲームオーバー時の音とパーティクル
 	_play_feedback("CrashParticles", "GameOverSE", player.position + Vector2(25, 25))
+	_start_hitstop()
+	_start_shake(SHAKE_STRENGTH, SHAKE_DURATION)
+	_start_flash()
 
 	# 高スコア更新時の音
 	if is_record:
@@ -134,6 +185,9 @@ func game_over() -> void:
 			highscore_se.play()
 
 func _process(delta: float) -> void:
+	if hitstop_end_msec > 0 and Time.get_ticks_msec() >= hitstop_end_msec:
+		_end_hitstop()
+
 	if state == GameState.PLAYING:
 		score += delta
 
