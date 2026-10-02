@@ -136,6 +136,11 @@ func _clear_all_gates() -> void:
 	for gate_node in _live_gates():
 		_despawn(gate_node)
 
+# 生存中のゲート一覧。取得箇所が3か所に散ると名前のtypoで
+# 幽霊ゲートが生まれるので、グループ名の記述はここに一本化する。
+func _live_gates() -> Array[Node]:
+	return get_tree().get_nodes_in_group("gates")
+
 # queue_free は次フレームまで残るため、グループから先に外す。
 # 手動 tick のテストでは外し忘れると幽霊ゲートと衝突してしまう。
 func _despawn(gate_node: Node) -> void:
@@ -143,9 +148,9 @@ func _despawn(gate_node: Node) -> void:
 	gate_node.queue_free()
 
 func _check_gate_collision() -> void:
-	var player_body_rect := get_body_rect()
+	var body := get_body_rect()
 	for gate_node in _live_gates():
-		if gate_node.collides_with(player_body_rect):
+		if gate_node.collides_with(body):
 			_failed = true
 			return
 
