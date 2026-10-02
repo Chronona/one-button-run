@@ -125,6 +125,11 @@ func _advance_gates(delta: float) -> void:
 		if gate_node.is_offscreen():
 			_despawn(gate_node)
 
+# 生存中のゲート一覧。取得箇所が3か所に散ると名前のtypoで
+# 幽霊ゲートが生まれるので、グループ名の記述はここに一本化する。
+func _live_gates() -> Array[Node]:
+	return get_tree().get_nodes_in_group("gates")
+
 # ラウンド開始時の掃除用。進行中の破棄と同一手順にまとめて、
 # 掃除漏れによる幽霊ゲートとの衝突を防ぐ。
 func _clear_all_gates() -> void:
@@ -137,15 +142,10 @@ func _despawn(gate_node: Node) -> void:
 	gate_node.remove_from_group("gates")
 	gate_node.queue_free()
 
-# 生存中のゲート一覧。取得箇所が3か所に散ると名前のtypoで
-# 幽霊ゲートが生まれるので、グループ名の記述はここに一本化する。
-func _live_gates() -> Array[Node]:
-	return get_tree().get_nodes_in_group("gates")
-
 func _check_gate_collision() -> void:
-	var player_body := get_body_rect()
+	var player_body_rect := get_body_rect()
 	for gate_node in _live_gates():
-		if gate_node.collides_with(player_body):
+		if gate_node.collides_with(player_body_rect):
 			_failed = true
 			return
 
