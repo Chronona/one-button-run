@@ -6,6 +6,8 @@ extends "res://core/game_mode.gd"
 # 離した瞬間の角度とパワーで弾が飛ぶ。標的に当てると残弾が戻る。
 # 押さずにいると見送りで残弾が減り、残弾が尽きると終わり。
 # 標的を全破壊すると次のステージへ進み、角度メーターが速くなる。
+# ステージを少ない投擲数で破壊するほど、次ステージの弾は発射後に分裂する
+# （1発で3分裂、2発で2分裂、3発以上は分裂なし。ADR 0008）。
 #
 # 時間も入力もホストから注入されるので、自前の更新受け付けは持たない。
 # 静的検査については spec の input_isolated_scripts を参照。
@@ -38,6 +40,11 @@ const AIM_TIMEOUT := 1.8
 const START_AMMO := 5
 const MAX_AMMO := 5
 
+# 分裂弾。本体の弾道は変えず、横に散る弾を足す。本体はそのままなので
+# 「分裂なし」で当たる射線は分裂ありでも必ず当たる（ボットの模擬も有効）。
+const SPLIT_TIME := 0.4
+const SPLIT_SPREAD := 0.14
+
 const TARGET_RADIUS := 44.0
 const SHELL_RADIUS := 8.0
 const TARGET_X_MIN := 620.0
@@ -51,6 +58,7 @@ const FEEDBACK_MAP := {
 	"act": {"particles": "ShootParticles", "se": "ShootSE"},
 	"fail": {"particles": "CrashParticles", "se": "GameOverSE"},
 	"record": {"particles": "", "se": "HighScoreSE"},
+	"split": {"particles": "HitParticles", "se": "HitSE"},
 }
 
 const FEEDBACK_OFFSET := Vector2(17, -6)
@@ -65,7 +73,13 @@ var shell_pos := Vector2.ZERO
 var shell_vel := Vector2.ZERO
 var flight_time: float = 0.0
 var aim_timer: float = 0.0
+# 現ステージでの投擲数と、今のステージで使える分裂数（1 = 分裂なし）。
+var stage_shots: int = 0
+var split_count: int = 1
+# 発射時点の分裂数。飛行中にステージが進んでも、この弾の分裂数は変わらない。
+var _shot_split: int = 1
 
+var _extra_shells: Array[Dictionary] = []
 var _elapsed: float = 0.0
 var _failed: bool = false
 
@@ -97,6 +111,8 @@ func is_aiming() -> bool:
 func get_feedback_position(event_name: String) -> Vector2:
 	if event_name == "act":
 		return muzzle_pos() + FEEDBACK_OFFSET
+	if event_name == "split":
+		return shell_pos
 	return CANNON_POS + FEEDBACK_OFFSET
 
 func get_player() -> Node:
@@ -119,6 +135,14 @@ func launch_velocity(t: float) -> Vector2:
 	var speed := lerpf(SPEED_MIN, SPEED_MAX, charge_power(t))
 	return Vector2(cos(ang), -sin(ang)) * speed
 
+# 前ステージの投擲数から、次ステージの分裂数を決める。
+func split_for_shots(shots: int) -> int:
+	if shots <= 1:
+		return 3
+	if shots == 2:
+		return 2
+	return 1
+
 func mode_start() -> void:
 	_elapsed = 0.0
 	_failed = false
@@ -130,6 +154,10 @@ func mode_start() -> void:
 	flying = false
 	flight_time = 0.0
 	aim_timer = 0.0
+	stage_shots = 0
+	split_count = 1
+	_shot_split = 1
+	_clear_extra_shells()
 	_clear_all_targets()
 	_spawn_stage()
 	_show_shell(false)
@@ -175,20 +203,69 @@ func _fire() -> void:
 	shell_vel = vel
 	flight_time = 0.0
 	aim_timer = 0.0
+	stage_shots += 1
+	_shot_split = split_count
+	_clear_extra_shells()
 	_show_shell(true)
 	_update_labels()
 	host.emit_feedback("act")
 
 func _integrate_shell(delta: float) -> void:
+	var before := flight_time
 	flight_time += delta
+	if before < SPLIT_TIME and flight_time >= SPLIT_TIME and _shot_split > 1:
+		_split_shell()
+	var main_alive := _step_shell(delta)
+	var any_alive := main_alive
+	for extra in _extra_shells:
+		extra["vel"].y += SHOT_GRAVITY * delta
+		extra["pos"] += extra["vel"] * delta
+		extra["node"].position = extra["pos"]
+		if extra["alive"]:
+			_check_shell_hit(extra["pos"])
+			if _shell_in_bounds(extra["pos"]):
+				any_alive = true
+			else:
+				extra["alive"] = false
+				extra["node"].visible = false
+	if not any_alive or flight_time >= MAX_FLIGHT_TIME:
+		_end_flight()
+
+func _step_shell(delta: float) -> bool:
 	shell_vel.y += SHOT_GRAVITY * delta
 	shell_pos += shell_vel * delta
+	_check_shell_hit(shell_pos)
+	return _shell_in_bounds(shell_pos)
+
+func _shell_in_bounds(pos: Vector2) -> bool:
+	return pos.y < GROUND_Y and pos.x <= FLY_X_MAX and pos.y >= FLY_Y_TOP
+
+func _check_shell_hit(pos: Vector2) -> void:
 	for target_node in _live_targets():
-		if shell_pos.distance_to(target_node.position) <= TARGET_RADIUS + SHELL_RADIUS:
+		if pos.distance_to(target_node.position) <= TARGET_RADIUS + SHELL_RADIUS:
 			_hit_target(target_node)
 			break
-	if shell_pos.y >= GROUND_Y or shell_pos.x > FLY_X_MAX or shell_pos.y < FLY_Y_TOP or flight_time >= MAX_FLIGHT_TIME:
-		_end_flight()
+
+# 本体を残し、速度を ± 回転した弾を足す。3分裂は左右、2分裂は上側だけ。
+func _split_shell() -> void:
+	var angles: Array[float] = [SPLIT_SPREAD, -SPLIT_SPREAD] if _shot_split >= 3 else [SPLIT_SPREAD]
+	for angle in angles:
+		var node: Polygon2D = shell.duplicate()
+		add_child(node)
+		node.visible = true
+		node.position = shell_pos
+		_extra_shells.append({
+			"pos": shell_pos,
+			"vel": shell_vel.rotated(angle),
+			"node": node,
+			"alive": true,
+		})
+	host.emit_feedback("split")
+
+func _clear_extra_shells() -> void:
+	for extra in _extra_shells:
+		extra["node"].queue_free()
+	_extra_shells.clear()
 
 func _hit_target(target_node: Node2D) -> void:
 	var hit_pos: Vector2 = target_node.position
@@ -198,12 +275,15 @@ func _hit_target(target_node: Node2D) -> void:
 	if _live_targets().is_empty():
 		stage += 1
 		ammo = mini(ammo + 1, MAX_AMMO)
+		split_count = split_for_shots(stage_shots)
+		stage_shots = 0
 		_spawn_stage()
 	_update_labels()
 
 func _end_flight() -> void:
 	flying = false
 	aim_timer = 0.0
+	_clear_extra_shells()
 	_show_shell(false)
 	if ammo <= 0:
 		_failed = true
@@ -269,7 +349,8 @@ func _update_labels() -> void:
 	if ammo_label != null:
 		ammo_label.text = "Ammo: %d" % ammo
 	if stage_label != null:
-		stage_label.text = "Stage: %d" % stage
+		var split_text := "  x%d" % split_count if split_count > 1 else ""
+		stage_label.text = "Stage: %d%s" % [stage, split_text]
 
 func _sync_visuals() -> void:
 	var aim_angle := charge_angle(charge_time) if charging else charge_angle(0.0)
