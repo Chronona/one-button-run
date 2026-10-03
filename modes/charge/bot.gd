@@ -35,7 +35,7 @@ func _shot_hits(main: Node, mode: Node, charge_t: float) -> bool:
 	var targets: Array[Node] = mode.get_tree().get_nodes_in_group("targets")
 	var hit_radius: float = mode.TARGET_RADIUS + mode.SHELL_RADIUS
 	var steps: int = int(SIM_MAX_TIME / SIM_DT)
-	for i in steps:
+	for _i in steps:
 		vel.y += mode.SHOT_GRAVITY * SIM_DT
 		pos += vel * SIM_DT
 		for target_node in targets:
