@@ -19,23 +19,24 @@ func _ready() -> void:
 	if get_child_count() == 0:
 		_build_visuals()
 
+# 的の円盤と外側リングで同じ24角形の生成を共有する。見た目専用であり、
+# 当たり判定（TARGET_RADIUS）はモード側が持つため難易度には影響しない。
+func _circle_points(p_radius: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in 24:
+		var angle := TAU * float(i) / 24.0
+		points.append(Vector2(cos(angle), sin(angle)) * p_radius)
+	return points
+
 func _build_visuals() -> void:
 	if get_child_count() > 0:
 		return
 	var disc := Polygon2D.new()
-	var disc_points := PackedVector2Array()
-	for i in 24:
-		var angle := TAU * float(i) / 24.0
-		disc_points.append(Vector2(cos(angle), sin(angle)) * target_radius)
-	disc.polygon = disc_points
+	disc.polygon = _circle_points(target_radius)
 	disc.color = DISC_COLOR
 	add_child(disc)
 	var ring := Polygon2D.new()
-	var ring_points := PackedVector2Array()
-	for i in 24:
-		var angle := TAU * float(i) / 24.0
-		ring_points.append(Vector2(cos(angle), sin(angle)) * (target_radius + 6.0))
-	ring.polygon = ring_points
+	ring.polygon = _circle_points(target_radius + 6.0)
 	ring.color = RING_COLOR
 	add_child(ring)
 	var core := Polygon2D.new()
