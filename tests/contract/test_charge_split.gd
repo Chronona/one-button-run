@@ -37,4 +37,21 @@ func run(reporter: RefCounted, _tree: SceneTree, spec: Dictionary) -> void:
 	reporter.check(mode.stage_shots == 0, "投擲カウントがリセットされない")
 
 	mode.flying = false
+
+	reporter.begin_case("3分裂の状態で発射すると0.4秒後に弾が2つ増える")
+	# 命中でステージが進むと検証が曇るため、標的を遠くに退避させる。
+	for t in mode.get_tree().get_nodes_in_group("targets"):
+		t.position = Vector2(2000.0, 2000.0)
+	harness.feedback_log.clear()
+	mode.ammo = mode.MAX_AMMO
+	mode.charging = true
+	mode.charge_time = 0.8
+	mode._fire()
+	reporter.check(mode._shot_split == 3, "_shot_split=%d" % mode._shot_split)
+	reporter.check(mode._extra_shells.size() == 0, "発射直後に増えている extra=%d" % mode._extra_shells.size())
+	harness.step(mode.SPLIT_TIME + 0.2)
+	reporter.check(mode._extra_shells.size() == 2, "分裂後に弾が増えない extra=%d" % mode._extra_shells.size())
+	reporter.check(harness.feedback_log.has("split"), "splitイベントが発火しない: %s" % str(harness.feedback_log))
+
+	mode.flying = false
 	harness.teardown()
