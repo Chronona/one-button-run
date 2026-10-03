@@ -35,6 +35,8 @@ const SPEED_MIN := 350.0
 const SPEED_MAX := 950.0
 const SHOT_GRAVITY := 500.0
 const MAX_HOLD := 2.5
+# パワーバーの最大幅（ピクセル）。見た目専用のため難易度には影響しない。
+const POWER_BAR_MAX_WIDTH := 140.0
 
 # 構えの制限時間。警告を出してから見送りで残弾を1つ失う。
 # 警告なしで減弾すると放置死に見えるため、AIM_WARN_TIME で先に知らせる。
@@ -308,7 +310,7 @@ func _end_flight() -> void:
 func _spawn_stage() -> void:
 	var count: int = mini(stage, 3)
 	var placed: Array[Vector2] = []
-	for i in count:
+	for _i in count:
 		placed.append(_pick_target_pos(placed))
 	for pos in placed:
 		var target_node: Node2D = TARGET_SCRIPT.new()
@@ -320,7 +322,7 @@ func _pick_target_pos(placed: Array[Vector2]) -> Vector2:
 	var fallback := Vector2(
 		(TARGET_X_MIN + TARGET_X_MAX) * 0.5,
 		(TARGET_Y_MIN + TARGET_Y_MAX) * 0.5)
-	for i in TARGET_PLACE_TRIES:
+	for _i in TARGET_PLACE_TRIES:
 		var candidate := Vector2(
 			host.get_rng().randf_range(TARGET_X_MIN, TARGET_X_MAX),
 			host.get_rng().randf_range(TARGET_Y_MIN, TARGET_Y_MAX))
@@ -381,7 +383,7 @@ func _sync_visuals() -> void:
 		power_fill.visible = charging
 		if charging:
 			var power := charge_power(charge_time)
-			power_fill.offset_right = power_fill.offset_left + 140.0 * power
+			power_fill.offset_right = power_fill.offset_left + POWER_BAR_MAX_WIDTH * power
 	_update_warn_visual()
 
 func _update_warn_visual() -> void:

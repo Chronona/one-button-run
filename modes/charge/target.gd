@@ -7,6 +7,8 @@ extends Node2D
 const RING_COLOR := Color(0.35, 1.0, 0.65, 1.0)
 const DISC_COLOR := Color(0.05, 0.45, 0.30, 1.0)
 const CORE_COLOR := Color(1.0, 0.95, 0.55, 1.0)
+# 的の円盤と外側リングで共有する多角形の分割数。
+const SEGMENTS := 24
 
 var target_radius: float = 44.0
 
@@ -23,8 +25,8 @@ func _ready() -> void:
 # 当たり判定（TARGET_RADIUS）はモード側が持つため難易度には影響しない。
 func _circle_points(p_radius: float) -> PackedVector2Array:
 	var points := PackedVector2Array()
-	for i in 24:
-		var angle := TAU * float(i) / 24.0
+	for i in SEGMENTS:
+		var angle := TAU * float(i) / float(SEGMENTS)
 		points.append(Vector2(cos(angle), sin(angle)) * p_radius)
 	return points
 
