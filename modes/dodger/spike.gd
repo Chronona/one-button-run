@@ -34,22 +34,16 @@ func get_body_rect() -> Rect2:
 	return Rect2(position - Vector2(BODY_HALF, BODY_HALF), Vector2(BODY_HALF, BODY_HALF) * 2.0)
 
 func _build_visuals() -> void:
-	var outer := Polygon2D.new()
-	outer.polygon = PackedVector2Array([
-		Vector2(SPIKE_HALF, 0.0),
-		Vector2(0.0, -SPIKE_HALF),
-		Vector2(-SPIKE_HALF, 0.0),
-		Vector2(0.0, SPIKE_HALF),
+	add_child(_make_diamond(SPIKE_HALF, SPIKE_COLOR))
+	add_child(_make_diamond(SPIKE_HALF * 0.45, CORE_COLOR))
+
+func _make_diamond(half_size: float, color: Color) -> Polygon2D:
+	var diamond := Polygon2D.new()
+	diamond.polygon = PackedVector2Array([
+		Vector2(half_size, 0.0),
+		Vector2(0.0, -half_size),
+		Vector2(-half_size, 0.0),
+		Vector2(0.0, half_size),
 	])
-	outer.color = SPIKE_COLOR
-	add_child(outer)
-	var core := Polygon2D.new()
-	var half := SPIKE_HALF * 0.45
-	core.polygon = PackedVector2Array([
-		Vector2(half, 0.0),
-		Vector2(0.0, -half),
-		Vector2(-half, 0.0),
-		Vector2(0.0, half),
-	])
-	core.color = CORE_COLOR
-	add_child(core)
+	diamond.color = color
+	return diamond
