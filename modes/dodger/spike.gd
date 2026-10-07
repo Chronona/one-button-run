@@ -5,6 +5,9 @@ extends Node2D
 
 const SPIKE_HALF := 28.0
 const BODY_HALF := 24.0
+# 当たり判定の矩形サイズ。runner/obstacle.gd と同じ書き方にそろえて、
+# 呼び出し毎の Vector2 組み立て重複をなくす。
+const BODY_SIZE := Vector2(BODY_HALF, BODY_HALF) * 2.0
 const SPIKE_COLOR := Color(1.0, 0.30, 0.15, 1.0)
 const CORE_COLOR := Color(1.0, 0.85, 0.30, 1.0)
 
@@ -31,7 +34,7 @@ func is_offscreen() -> bool:
 	return position.x < -60.0
 
 func get_body_rect() -> Rect2:
-	return Rect2(position - Vector2(BODY_HALF, BODY_HALF), Vector2(BODY_HALF, BODY_HALF) * 2.0)
+	return Rect2(position - BODY_SIZE * 0.5, BODY_SIZE)
 
 func _build_visuals() -> void:
 	add_child(_make_diamond(SPIKE_HALF, SPIKE_COLOR))
