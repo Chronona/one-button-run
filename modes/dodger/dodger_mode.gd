@@ -21,6 +21,10 @@ const FEEDBACK_OFFSET := Vector2(20, 20)
 # レーンごとの自機色（見た目のみ）。当たり判定には使わない。
 const LANE_TOP_COLOR := Color(0.25, 0.95, 1.0)
 const LANE_BOTTOM_COLOR := Color(1.0, 0.45, 0.95)
+# レーン番号(0/1)からY座標・自機色を引くための対応表。
+# lane_y() と _sync_player() で同じ分岐を重複させないための単一の真実源。
+const LANE_Y_POSITIONS := [LANE_TOP_Y, LANE_BOTTOM_Y]
+const LANE_COLORS := [LANE_TOP_COLOR, LANE_BOTTOM_COLOR]
 
 const BASE_SPEED := 220.0
 const SPEED_PER_SECOND := 1.5
@@ -43,7 +47,8 @@ var spawn_cooldown: float = INITIAL_SPAWN_COOLDOWN
 
 var _elapsed: float = 0.0
 var _failed: bool = false
-var _next_lane: int = 0
+# 次にトゲを出すレーン。必ず交互になるよう spawn ごとに反転する。
+var _next_spawn_lane: int = 0
 
 @onready var player: Polygon2D = $Player
 
@@ -66,9 +71,7 @@ func get_body_rect() -> Rect2:
 	return Rect2(player_pos - Vector2(PLAYER_HALF, PLAYER_HALF), PLAYER_SIZE)
 
 func lane_y(lane: int) -> float:
-	if lane == 0:
-		return LANE_TOP_Y
-	return LANE_BOTTOM_Y
+	return LANE_Y_POSITIONS[clampi(lane, 0, 1)]
 
 func mode_start() -> void:
 	_elapsed = 0.0
@@ -79,7 +82,7 @@ func mode_start() -> void:
 	player_pos = Vector2(PLAYER_X, LANE_TOP_Y)
 	# 最初のトゲは自機のレーンに出す。無操作なら必ず当たるので、
 	# 放置で遊べてしまうゲームにはならない。
-	_next_lane = player_lane
+	_next_spawn_lane = player_lane
 	_clear_all_spikes()
 	_sync_player()
 
@@ -104,11 +107,11 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 
 func spawn_spike() -> void:
 	var spike_node: Node2D = SPIKE_SCRIPT.new()
-	spike_node.setup(_next_lane, Vector2(SPAWN_X, lane_y(_next_lane)), scroll_speed)
+	spike_node.setup(_next_spawn_lane, Vector2(SPAWN_X, lane_y(_next_spawn_lane)), scroll_speed)
 	add_child(spike_node)
 	# レーンは必ず交互にする。同時に両レーンが塞がれないので、
 	# 反応さえすれば回避不能な配置は出ない。
-	_next_lane = 1 - _next_lane
+	_next_spawn_lane = 1 - _next_spawn_lane
 
 func _advance_spikes(delta: float) -> void:
 	for spike_node in _live_spikes():
@@ -144,7 +147,4 @@ func _sync_player() -> void:
 	if player == null:
 		return
 	player.position = player_pos
-	if player_lane == 0:
-		player.color = LANE_TOP_COLOR
-	else:
-		player.color = LANE_BOTTOM_COLOR
+	player.color = LANE_COLORS[clampi(player_lane, 0, 1)]
