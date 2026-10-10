@@ -21,6 +21,10 @@ const FEEDBACK_OFFSET := Vector2(20, 20)
 # レーンごとの自機色（見た目のみ）。当たり判定には使わない。
 const LANE_TOP_COLOR := Color(0.25, 0.95, 1.0)
 const LANE_BOTTOM_COLOR := Color(1.0, 0.45, 0.95)
+# レーン切替時のひと目で分かる伸縮（見た目のみ）。当たり判定は
+# player_pos 矩形で行うので、伸縮しても判定には影響しない。
+const SWITCH_STRETCH := Vector2(1.3, 0.7)
+const SWITCH_RECOVER_SEC := 0.15
 # レーン番号(0/1)からY座標・自機色を引くための対応表。
 # lane_y() と _sync_player() で同じ分岐を重複させないための単一の真実源。
 const LANE_Y_POSITIONS := [LANE_TOP_Y, LANE_BOTTOM_Y]
@@ -47,6 +51,8 @@ var spawn_cooldown: float = INITIAL_SPAWN_COOLDOWN
 
 var _elapsed: float = 0.0
 var _failed: bool = false
+var _next_lane: int = 0
+var _switch_tween: Tween
 # 次にトゲを出すレーン。必ず交互になるよう spawn ごとに反転する。
 var _next_spawn_lane: int = 0
 
@@ -84,6 +90,7 @@ func mode_start() -> void:
 	# 放置で遊べてしまうゲームにはならない。
 	_next_spawn_lane = player_lane
 	_clear_all_spikes()
+	_reset_switch_pulse()
 	_sync_player()
 
 func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
@@ -93,6 +100,7 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 	if act_pressed and not _failed:
 		player_lane = 1 - player_lane
 		player_pos.y = lane_y(player_lane)
+		_pulse_switch()
 		host.emit_feedback("act")
 
 	_sync_player()
@@ -147,4 +155,25 @@ func _sync_player() -> void:
 	if player == null:
 		return
 	player.position = player_pos
+	if player_lane == 0:
+		player.color = LANE_TOP_COLOR
+	else:
+		player.color = LANE_BOTTOM_COLOR
+
+# 見た目だけの伸縮。判定（get_body_rect）には触らない。
+func _pulse_switch() -> void:
+	if player == null:
+		return
+	if _switch_tween != null:
+		_switch_tween.kill()
+	player.scale = SWITCH_STRETCH
+	_switch_tween = create_tween()
+	var recover := _switch_tween.tween_property(player, "scale", Vector2.ONE, SWITCH_RECOVER_SEC)
+	recover.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _reset_switch_pulse() -> void:
+	if _switch_tween != null:
+		_switch_tween.kill()
+	if player != null:
+		player.scale = Vector2.ONE
 	player.color = LANE_COLORS[clampi(player_lane, 0, 1)]
