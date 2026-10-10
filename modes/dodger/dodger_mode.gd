@@ -66,9 +66,7 @@ func get_body_rect() -> Rect2:
 	return Rect2(player_pos - Vector2(PLAYER_HALF, PLAYER_HALF), PLAYER_SIZE)
 
 func lane_y(lane: int) -> float:
-	if lane == 0:
-		return LANE_TOP_Y
-	return LANE_BOTTOM_Y
+	return LANE_TOP_Y if lane == 0 else LANE_BOTTOM_Y
 
 func mode_start() -> void:
 	_elapsed = 0.0
@@ -144,7 +142,4 @@ func _sync_player() -> void:
 	if player == null:
 		return
 	player.position = player_pos
-	if player_lane == 0:
-		player.color = LANE_TOP_COLOR
-	else:
-		player.color = LANE_BOTTOM_COLOR
+	player.color = LANE_TOP_COLOR if player_lane == 0 else LANE_BOTTOM_COLOR
