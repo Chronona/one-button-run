@@ -1,6 +1,6 @@
 {
   "description": "利用可能なゲームモードと、いま有効なモード。週次の大型アップデートは新しいモードを追加して active を切り替える。旧モードは消さないので、事故ったら active を戻すだけで巻き戻せる。",
-  "active": "dodger",
+  "active": "pulse",
   "modes": {
     "runner": {
       "scene": "res://modes/runner/runner.tscn",
@@ -21,6 +21,10 @@
     "dodger": {
       "scene": "res://modes/dodger/dodger.tscn",
       "spec": "res://modes/dodger/spec.json"
+    },
+    "pulse": {
+      "scene": "res://modes/pulse/pulse.tscn",
+      "spec": "res://modes/pulse/spec.json"
     }
   }
 }

@@ -1,0 +1,36 @@
+{
+  "id": "pulse",
+  "description": "拍タイミングモードの契約値。タップ = 縮む輪が目標に重なった瞬間の一撃。早すぎも遅すぎも無操作も失敗。難易度は拍のテンポ。",
+  "act_semantics": "beat-strike",
+  "input_isolated_scripts": [
+    "res://modes/pulse/pulse_mode.gd"
+  ],
+  "required_feedback_events": [
+    "act",
+    "fail",
+    "record"
+  ],
+  "dual_channel_feedback_events": [
+    "act",
+    "fail"
+  ],
+  "required_export_presets": [
+    "Web"
+  ],
+  "grace_seconds": 2.0,
+  "grace_seconds_min": 1.0,
+  "idle_death_max_seconds": 10.0,
+  "bot": "res://modes/pulse/bot.gd",
+  "bot_min_survival_seconds": 180.0,
+  "bot_seeds": [
+    1,
+    7,
+    42,
+    555,
+    1337,
+    2024,
+    77777,
+    20260915
+  ],
+  "max_speed_cap": 1.2
+}
