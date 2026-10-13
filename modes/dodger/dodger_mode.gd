@@ -51,7 +51,6 @@ var spawn_cooldown: float = INITIAL_SPAWN_COOLDOWN
 
 var _elapsed: float = 0.0
 var _failed: bool = false
-var _next_lane: int = 0
 var _switch_tween: Tween
 # 次にトゲを出すレーン。必ず交互になるよう spawn ごとに反転する。
 var _next_spawn_lane: int = 0
@@ -155,10 +154,9 @@ func _sync_player() -> void:
 	if player == null:
 		return
 	player.position = player_pos
-	if player_lane == 0:
-		player.color = LANE_TOP_COLOR
-	else:
-		player.color = LANE_BOTTOM_COLOR
+	# レーン番号から色を引く。分岐の重複を避けるため、対応表 LANE_COLORS を
+	# _reset_switch_pulse() と共有する単一の真実源にする。
+	player.color = LANE_COLORS[clampi(player_lane, 0, 1)]
 
 # 見た目だけの伸縮。判定（get_body_rect）には触らない。
 func _pulse_switch() -> void:
