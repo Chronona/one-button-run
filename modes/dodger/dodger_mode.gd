@@ -155,10 +155,9 @@ func _sync_player() -> void:
 	if player == null:
 		return
 	player.position = player_pos
-	if player_lane == 0:
-		player.color = LANE_TOP_COLOR
-	else:
-		player.color = LANE_BOTTOM_COLOR
+	# 色の対応表 LANE_COLORS が単一の真実源。if/else の重複をなくし、
+	# _reset_switch_pulse() と同じ引き方にそろえる（見た目のみの変更）。
+	player.color = LANE_COLORS[clampi(player_lane, 0, 1)]
 
 # 見た目だけの伸縮。判定（get_body_rect）には触らない。
 func _pulse_switch() -> void:
