@@ -1,0 +1,48 @@
+{
+    "bank_version": "forge_v2r6+forge04r1+fit1+pluck1",
+    "design": "Unified sound set: jump and land share one timbre (ui_pop/soft) at different pitches so jump->land reads as one action; gameover is a descending mallet phrase, not a single impact; highscore is an ascending mallet phrase in the same family.",
+    "earshot": "Leonxlnx/earshot bank (MIT), rendered in code; no recorded audio, no models, no network for bank.render",
+    "output_format": "mono 44100 Hz 16-bit WAV",
+    "sounds": [
+        {
+            "bank_id": "ui_pop/soft",
+            "output": "assets/se/jump.wav",
+            "pitch": "A5",
+            "role": "act (jump / flap / switch / hook / shoot / pulse share this file today; see docs/audio-earshot.md)",
+            "seed": 1
+        },
+        {
+            "bank_id": "ui_pop/soft",
+            "output": "assets/se/land.wav",
+            "pitch": "E4",
+            "role": "land (same timbre as jump, one pitch lower, so jump->land is coherent)",
+            "seed": 1
+        },
+        {
+            "output": "assets/se/gameover.wav",
+            "role": "fail (descending mallet phrase: it tells the player the run ended)",
+            "seed": 1,
+            "sequence": [
+                {
+                    "bank_id": "mallet/celesta",
+                    "pitch": "E5"
+                },
+                {
+                    "bank_id": "mallet/celesta",
+                    "pitch": "C5"
+                },
+                {
+                    "bank_id": "mallet/celesta",
+                    "pitch": "A4"
+                }
+            ],
+            "spacing_s": 0.28
+        },
+        {
+            "bank_id": "mallet/up4",
+            "output": "assets/se/highscore.wav",
+            "role": "record (ascending mallet phrase, same family as gameover)",
+            "seed": 1
+        }
+    ]
+}
