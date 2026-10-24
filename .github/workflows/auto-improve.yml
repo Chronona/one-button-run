@@ -83,6 +83,11 @@ jobs:
               pull requests that change them. Gameplay changes belong in `modes/`.
             - If a contract test fails, fix the game so the contract holds again. Never
               weaken, skip, or delete a test to get to green.
+            - Audio changes, if any, must go through earshot, not through
+              hand-edited WAVs: edit `audio/earshot-manifest.json` only (see
+              `docs/audio-earshot.md`), and regenerate with
+              `scripts/generate-audio.py`. Never commit a WAV you did not
+              generate from the manifest.
             - The active mode's spec (`modes/registry.json` -> `active` -> `spec`, by
               default `modes/runner/spec.json`) holds the tunable thresholds. Adjusting a
               value there is allowed only when the game genuinely changed for the better;

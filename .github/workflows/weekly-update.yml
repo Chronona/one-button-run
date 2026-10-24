@@ -118,10 +118,24 @@ jobs:
             - Never delete or modify an existing mode under `modes/`. Old modes are
               kept so that a failed update can be rolled back by setting `active` back
               to the previous id.
-            - Do not add binary assets; you cannot author art or audio. Vary the look
-              and feel with what you can write: colors and `modulate`, `Polygon2D` and
-              `ColorRect` shapes, particle parameters, and the existing sounds under
-              `assets/se/` at different `volume_db` and `pitch_scale`.
+            - Do not add binary assets by hand, and never hand-edit a WAV. You
+              cannot author art, but you CAN author audio in code, through earshot
+              (see `docs/audio-earshot.md`): add entries to
+              `audio/earshot-manifest.json` (a single sound with an optional
+              `pitch`, or a `sequence` phrase with `spacing_s`), then regenerate
+              with `scripts/generate-audio.py` (it needs numpy/scipy and an
+              earshot clone: `EARSHOT_PATH=/path/to/earshot python3
+              scripts/generate-audio.py`; `--check` verifies the audit without
+              writing). Every rendered sound must pass earshot's model-free
+              audit, or the script refuses to write it. Keep the set unified:
+              act sounds share one timbre at different pitches, failure is a
+              descending phrase, record is an ascending phrase in the same
+              mallet family. By default, reuse the existing sounds under
+              `assets/se/` at different `volume_db` and `pitch_scale`; add a
+              new manifest entry only when the new mode genuinely needs a
+              sound the set does not have. Vary the look and feel with what
+              you can write: colors and `modulate`, `Polygon2D` and
+              `ColorRect` shapes, and particle parameters.
             - Run `bash scripts/check.sh` and iterate until every contract test passes.
               The contract tests are what decide whether your mode is shippable: they
               check that one action drives the whole state cycle, that doing nothing
