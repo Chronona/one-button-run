@@ -129,3 +129,26 @@ jobs:
             exit 1
           fi
           echo "OK: 保護対象への変更はありません。"
+
+  audio:
+    name: earshot 音声監査
+    # マニフェストから生成される音が、earshot のモデルフリー監査を通ること
+    # だけを確認する。WAV バイナリとマニフェストの一致までは見ない:
+    # 上流の assets/se/*.wav はまだ旧音のままで、一致チェックは
+    # WAV の置き換えが済むまで赤になってしまうため。
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: earshot の監査だけ走らせる
+        run: |
+          set -euo pipefail
+          pip install --quiet numpy scipy
+          git clone --quiet --depth 1 https://github.com/Leonxlnx/earshot /tmp/earshot
+          EARSHOT_PATH=/tmp/earshot python3 scripts/generate-audio.py --check
