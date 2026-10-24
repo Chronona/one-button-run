@@ -9,10 +9,29 @@ scipy だけで再現できます。
 
 | 出力ファイル | earshot バンク | 役割 |
 | --- | --- | --- |
-| `assets/se/jump.wav` | `ui_pop/soft` | act（ジャンプ／フラップ／切替／フック／射撃／パルスは今はこのファイルを共有） |
-| `assets/se/land.wav` | `knock/wood` | land |
-| `assets/se/gameover.wav` | `pro_impact/short` | fail |
-| `assets/se/highscore.wav` | `mallet/up4` | record |
+| `assets/se/jump.wav` | `ui_pop/soft`（pitch A5） | act（ジャンプ／フラップ／切替／フック／射撃／パルスは今はこのファイルを共有） |
+| `assets/se/land.wav` | `ui_pop/soft`（pitch E4） | land（jump と同じ音色を低くしたもの） |
+| `assets/se/gameover.wav` | `mallet/celesta` E5 → C5 → A4（0.28秒間隔） | fail（下がっていくフレーズで、ランが終わったことを伝える） |
+| `assets/se/highscore.wav` | `mallet/up4` | record（上がっていく mallet フレーズ） |
+
+## 統一感の設計
+
+単体でいい音を集めるだけでは、ゲームの音にはなりません。ジャンプと
+着地が別の系統だと、ジャンプ→着地の順で聴いたときに違和感が出ます。
+また、ゲームオーバーを1発の衝撃音だけにすると、音だけでは何が
+起きたか伝わりません。
+
+そこで、このセットはこう統一しています。
+
+- **jump / land は同じ音色で高さだけ変える**：`ui_pop/soft` を jump は
+  高い A5、land は低い E4 で鳴らします。ジャンプ→着地が1つの動き
+  として聞こえます。
+- **gameover は下がっていくフレーズにする**：`mallet/celesta` の
+  E5 → C5 → A4 を並べた約1秒の音列です。highscore の上がる
+  mallet フレーズと同じ家族なので、全体の統一感も出ます。
+- マニフェストのエントリは、単音（`bank_id`＋任意の `pitch`）か、
+  フレーズ（`sequence`＋`spacing_s`）のどちらかです。フレーズの
+  各音はそれぞれ earshot の監査を通す必要があります。
 
 対応表そのものは `audio/earshot-manifest.json` が唯一の真実源です。
 音を変えたいときは WAV を直接差し替えるのではなく、マニフェストの

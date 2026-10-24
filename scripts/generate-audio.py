@@ -3,10 +3,16 @@
 
 The game used to ship four hand-picked WAV files in ``assets/se/`` with no
 record of where they came from. This script replaces that with a manifest:
-``audio/earshot-manifest.json`` maps each output file to one earshot bank
-sound (Leonxlnx/earshot, MIT). earshot's bank renders are code synthesis --
+``audio/earshot-manifest.json`` maps each output file to earshot bank
+sounds (Leonxlnx/earshot, MIT). earshot's bank renders are code synthesis --
 no recorded audio, no models and no network are needed for ``bank.render``,
 only numpy / scipy -- so the same command reproduces the same WAVs.
+
+A manifest entry is either a single sound (``bank_id``, optional ``pitch``)
+or a short phrase (``sequence``: a list of ``bank_id``/``pitch`` steps
+placed ``spacing_s`` apart, overlapping tails summed). Jump and land share
+one timbre at different pitches so they read as one action, and gameover is
+a descending phrase rather than a single impact, for the same reason.
 
 Usage:
     EARSHOT_PATH=/path/to/earshot python3 scripts/generate-audio.py
@@ -66,6 +72,61 @@ def _to_mono_44100(y: np.ndarray) -> np.ndarray:
     return np.clip(mono, -1.0, 1.0)
 
 
+def _render_entry(bank, entry):
+    """Render one manifest entry to mono 48 kHz audio.
+
+    Returns (audio, description). Every component render must pass
+    earshot's model-free audit, or the entry fails without writing.
+    """
+    seed = entry.get("seed", 1)
+    if "sequence" in entry:
+        spacing = int(round(entry.get("spacing_s", 0.28) * BANK_SR))
+        steps = entry["sequence"]
+        parts = []
+        for step in steps:
+            y, meta = bank.render(
+                step["bank_id"], seed=step.get("seed", seed),
+                pitch=step.get("pitch"),
+            )
+            checks = meta.get("checks", {})
+            print(
+                f"  {step['bank_id']} pitch={step.get('pitch')} "
+                f"dur={meta.get('dur_s', 0):.3f}s "
+                f"{'clean' if checks.get('ok') else 'FAILED AUDIT'}"
+            )
+            if not checks.get("ok"):
+                print(f"    warnings: {checks.get('warnings')}")
+                return None, None
+            mono = np.asarray(y, dtype=np.float64)
+            if mono.ndim == 2:
+                mono = mono.mean(axis=1)
+            parts.append(mono)
+        total = spacing * (len(parts) - 1) + len(parts[-1])
+        out = np.zeros(total, dtype=np.float64)
+        for i, part in enumerate(parts):
+            out[i * spacing:i * spacing + len(part)] += part
+        desc = " + ".join(
+            f"{s['bank_id']}@{s.get('pitch')}" for s in steps
+        )
+        return out, desc
+    y, meta = bank.render(
+        entry["bank_id"], seed=seed, pitch=entry.get("pitch"),
+    )
+    checks = meta.get("checks", {})
+    print(
+        f"{entry['output']}: {entry['bank_id']} pitch={entry.get('pitch')} "
+        f"dur={meta.get('dur_s', 0):.3f}s "
+        f"{'clean' if checks.get('ok') else 'FAILED AUDIT'}"
+    )
+    if not checks.get("ok"):
+        print(f"  warnings: {checks.get('warnings')}")
+        return None, None
+    mono = np.asarray(y, dtype=np.float64)
+    if mono.ndim == 2:
+        mono = mono.mean(axis=1)
+    return mono, entry["bank_id"]
+
+
 def main(argv) -> int:
     check_only = "--check" in argv
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -73,15 +134,8 @@ def main(argv) -> int:
     failed = False
     for entry in manifest["sounds"]:
         out_path = ROOT / entry["output"]
-        y, meta = bank.render(entry["bank_id"], seed=entry.get("seed", 1))
-        checks = meta.get("checks", {})
-        status = "clean" if checks.get("ok") else "FAILED AUDIT"
-        print(
-            f"{entry['output']}: {entry['bank_id']} "
-            f"dur={meta.get('dur_s', 0):.3f}s {status}"
-        )
-        if not checks.get("ok"):
-            print(f"  warnings: {checks.get('warnings')}")
+        y, desc = _render_entry(bank, entry)
+        if y is None:
             failed = True
             continue
         if check_only:
@@ -89,7 +143,7 @@ def main(argv) -> int:
         data = (_to_mono_44100(y) * 32767).astype(np.int16)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         wavfile.write(out_path, OUT_SR, data)
-        print(f"  wrote {out_path} ({len(data) / OUT_SR:.3f}s, mono {OUT_SR} Hz)")
+        print(f"  wrote {out_path} ({len(data) / OUT_SR:.3f}s, mono {OUT_SR} Hz) [{desc}]")
     if failed:
         print("ERROR: one or more renders failed earshot's audit; see above.")
         return 1
