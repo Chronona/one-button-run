@@ -1,0 +1,31 @@
+{
+    "bank_version": "forge_v2r6+forge04r1+fit1+pluck1",
+    "earshot": "Leonxlnx/earshot bank (MIT), rendered in code; no recorded audio, no models, no network for bank.render",
+    "output_format": "mono 44100 Hz 16-bit WAV",
+    "sounds": [
+        {
+            "bank_id": "ui_pop/soft",
+            "output": "assets/se/jump.wav",
+            "role": "act (jump / flap / switch / hook / shoot / pulse share this file today; see docs/audio-earshot.md)",
+            "seed": 1
+        },
+        {
+            "bank_id": "knock/wood",
+            "output": "assets/se/land.wav",
+            "role": "land",
+            "seed": 1
+        },
+        {
+            "bank_id": "pro_impact/short",
+            "output": "assets/se/gameover.wav",
+            "role": "fail",
+            "seed": 1
+        },
+        {
+            "bank_id": "mallet/up4",
+            "output": "assets/se/highscore.wav",
+            "role": "record",
+            "seed": 1
+        }
+    ]
+}
