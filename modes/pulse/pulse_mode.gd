@@ -35,6 +35,9 @@ const FEEDBACK_OFFSET := Vector2(0, -40)
 const HEART_PULSE := Vector2(1.5, 1.5)
 const HEART_RECOVER_SEC := 0.2
 
+# 空振りが即死ではない1回目だけ、早い/遅いを短く表示して原因を伝える。
+const HINT_SHOW_SEC := 0.6
+
 var phase: float = 0.0
 var beats: int = 0
 
@@ -44,12 +47,14 @@ var _failed: bool = false
 # 警告に留める。連打でごまかすと2回目で失敗するので、連打は通用しない。
 var _faults: int = 0
 var _heart_tween: Tween
+var _hint_time_left: float = 0.0
 
 @onready var pulse_ring: Line2D = $PulseRing
 @onready var window_in: Line2D = $WindowIn
 @onready var window_out: Line2D = $WindowOut
 @onready var target_ring: Line2D = $TargetRing
 @onready var heart: Polygon2D = $Heart
+@onready var timing_hint: Label = $TimingHint
 
 func _ready() -> void:
 	_build_circle(pulse_ring, R_OUTER)
@@ -94,6 +99,7 @@ func mode_start() -> void:
 	beats = 0
 	_faults = 0
 	_reset_heart_pulse()
+	_reset_timing_hint()
 	_sync_visuals()
 
 func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
@@ -109,9 +115,12 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 			host.add_score(SUCCESS_SCORE)
 			phase = 0.0
 			_faults = 0
+			_hide_timing_hint()
 			_pulse_heart()
 		else:
 			_faults += 1
+			# 窓のどちら側で外したかで、次に叩くべき向きが変わる。
+			_show_timing_hint(phase < window_start())
 			if _faults >= 2:
 				_failed = true
 
@@ -121,6 +130,7 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 			phase = 1.0
 			_failed = true
 
+	_tick_timing_hint(delta)
 	_sync_visuals()
 
 # 半径 r の円を Line2D の頂点列として作る。シーン側は空のまま置き、
@@ -162,3 +172,29 @@ func _reset_heart_pulse() -> void:
 		_heart_tween.kill()
 	if heart != null:
 		heart.scale = Vector2.ONE
+
+# 判定には触れない、空振り原因の短いヒント。1回目の空振りで
+# 「早すぎたのか遅すぎたのか」が分かり、次の拍で修正できる。
+# 表示時間はトゥイーンではなく注入された delta で数えるので、
+# ヘッドレス再生でも実プレイでも同じように消える。
+func _show_timing_hint(is_early: bool) -> void:
+	if timing_hint == null:
+		return
+	timing_hint.text = "早い!" if is_early else "遅い!"
+	timing_hint.visible = true
+	_hint_time_left = HINT_SHOW_SEC
+
+func _tick_timing_hint(delta: float) -> void:
+	if _hint_time_left <= 0.0:
+		return
+	_hint_time_left -= delta
+	if _hint_time_left <= 0.0:
+		_hide_timing_hint()
+
+func _hide_timing_hint() -> void:
+	_hint_time_left = 0.0
+	if timing_hint != null:
+		timing_hint.visible = false
+
+func _reset_timing_hint() -> void:
+	_hide_timing_hint()

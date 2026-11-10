@@ -54,6 +54,17 @@ position = Vector2(576, 324)
 polygon = PackedVector2Array(26, 0, 14, -18, 0, -26, -14, -18, -26, 0, -14, 18, 0, 26, 14, 18)
 color = Color(1, 0.2, 0.35, 1)
 
+[node name="TimingHint" type="Label" parent="."]
+visible = false
+offset_left = 426.0
+offset_top = 420.0
+offset_right = 726.0
+offset_bottom = 460.0
+theme_override_colors/font_color = Color(1, 0.45, 0.6, 1)
+theme_override_font_sizes/font_size = 30
+text = "早い!"
+horizontal_alignment = 1
+
 [node name="PulseParticles" type="CPUParticles2D" parent="."]
 emitting = false
 one_shot = true
