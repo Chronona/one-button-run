@@ -87,6 +87,11 @@ func window_start() -> float:
 func window_end() -> float:
 	return TARGET_PHASE + current_half()
 
+# 今の位相が許容窓の中にあるか。判定とボットの両方がこの1か所を参照するので、
+# 窓の境界の解釈が食い違わない。
+func in_window() -> bool:
+	return window_start() <= phase and phase <= window_end()
+
 func mode_start() -> void:
 	_elapsed = 0.0
 	_failed = false
@@ -104,7 +109,7 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 	# ボットが読む値と判定に使う値が同じなので、境界での食い違いが出ない。
 	if act_pressed and not _failed:
 		host.emit_feedback("act")
-		if window_start() <= phase and phase <= window_end():
+		if in_window():
 			beats += 1
 			host.add_score(SUCCESS_SCORE)
 			phase = 0.0

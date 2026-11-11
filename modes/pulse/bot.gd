@@ -13,8 +13,7 @@ func decide(main: Node, harness: RefCounted) -> void:
 	if mode.is_failed():
 		harness.release()
 		return
-	var phase: float = mode.phase
-	if mode.window_start() <= phase and phase <= mode.window_end():
+	if mode.in_window():
 		harness.press()
 	else:
 		harness.release()
