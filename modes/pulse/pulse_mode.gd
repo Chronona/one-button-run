@@ -134,17 +134,17 @@ func _build_circle(line: Line2D, radius: float) -> void:
 		points.append(Vector2(cos(angle), sin(angle)) * radius)
 	line.points = points
 
-func _ring_radius() -> float:
-	return R_OUTER * (1.0 - phase)
-
 func _sync_visuals() -> void:
-	if pulse_ring != null:
-		var base := Vector2.ONE * maxf(_ring_radius() / R_OUTER, 0.001)
-		pulse_ring.scale = base
-	if window_in != null:
-		window_in.scale = Vector2.ONE * (R_TARGET - current_half() * R_OUTER) / R_TARGET
-	if window_out != null:
-		window_out.scale = Vector2.ONE * (R_TARGET + current_half() * R_OUTER) / R_TARGET
+	_set_ring_scale(pulse_ring, maxf(1.0 - phase, 0.001))
+	var half_pixels := current_half() * R_OUTER
+	_set_ring_scale(window_in, (R_TARGET - half_pixels) / R_TARGET)
+	_set_ring_scale(window_out, (R_TARGET + half_pixels) / R_TARGET)
+
+# リングのスケール設定を一か所に集約する。ノード未接続でも落ちない。
+func _set_ring_scale(line: Line2D, scale_factor: float) -> void:
+	if line == null:
+		return
+	line.scale = Vector2.ONE * scale_factor
 
 # 見た目だけの鼓動。判定（phase）には触らない。
 func _pulse_heart() -> void:
