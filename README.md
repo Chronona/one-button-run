@@ -93,19 +93,23 @@ godot --headless --path . --script res://tests/run_tests.gd
 
 > **注意:** `GITHUB_TOKEN` が作成した PR の CI は `approval-required` 状態で止まります
 > （[GitHub の仕様](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)）。
-> 日次フローは `auto-improve.yml` の中でこの承認を自動化しています
+> 日次フローは `auto-merge.yml` の中でこの承認を自動化しています
 > （`POST /actions/runs/{run_id}/approve`）。人が「Approve workflows to run」を押す
 > 必要はありません。週次フローの PR は人が「Approve workflows to run」を押して
 > CI を走らせ、レビューしてからマージします。
 > どちらのフローも、生成後に自分で `scripts/check.sh` と保護対象の検査を回して、
 > 失敗ならワークフロー実行自体を赤にします（Actions タブで確認できます）。
 >
+> 日次の自動マージは GitHub 標準の auto-merge を使います。`main` の必須ステータスチェック
+> （`L0 契約テスト` と `契約テスト改変ガード`）が緑になると、GitHub 側が squash マージします。
+> 赤のままならマージは起きず、PR が開いたまま残ります。
+>
 > **日次の自動マージにはシークレット `AUTO_MERGE_TOKEN` が必要です。**
 > fine-grained PAT（対象はこのリポジトリ 1 つだけ、権限は Contents: Read and write /
 > Pull requests: Read and write / Actions: Read and write）を作り、
-> リポジトリのシークレットに登録してください。この PAT は承認とマージの 2 ステップだけで使い、
-> エージェントの実行環境には渡しません。`GITHUB_TOKEN` でマージすると `main` への push で
-> ワークフローが起動せず（CI も Pages の公開も動かない）ため、PAT が必要です。
+> リポジトリのシークレットに登録してください。この PAT は承認と auto-merge の有効化の
+> 2 ステップだけで使い、エージェントの実行環境には渡しません。`GITHUB_TOKEN` でマージすると
+> `main` への push でワークフローが起動せず（CI も Pages の公開も動かない）ため、PAT が必要です。
 
 週次更新が不調だった場合は、`modes/registry.json` の `active` を前のモード ID に戻せば
 巻き戻せます。旧モードは削除されません。

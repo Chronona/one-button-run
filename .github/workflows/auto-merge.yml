@@ -64,20 +64,14 @@ jobs:
           done
           echo "::warning::承認待ちの CI 実行が見つかりませんでした（CI が自動で走っている場合はそのまま進みます）"
 
-      - name: CI が緑になるまで待ち、マージする
+      - name: CI が緑になったら自動でマージする設定にする
+        # 標準の auto-merge を使う。必須ステータスチェック（ruleset）が全部緑に
+        # なると、GitHub 側がマージを実行する。赤のままならマージは起きない。
+        # PAT で有効化しているのは、GITHUB_TOKEN だと main への push で
+        # ワークフローが起動せず（CI も Pages の公開も動かない）ため。
         env:
           GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
           PR: ${{ inputs.pr }}
         run: |
           set -euo pipefail
-          for _ in $(seq 1 12); do
-            if gh pr checks "$PR" --repo "$GITHUB_REPOSITORY" --json name >/dev/null 2>&1; then
-              break
-            fi
-            sleep 5
-          done
-          # 待ち続けて止まると実行時間が上限までふやけるので、30分で打ち切る。
-          # Ubuntu ランナーには GNU timeout が入っている。
-          timeout 1800 gh pr checks "$PR" --repo "$GITHUB_REPOSITORY" \
-            --watch --fail-fast --interval 30
-          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --auto --squash
