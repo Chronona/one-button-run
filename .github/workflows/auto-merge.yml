@@ -13,7 +13,7 @@ on:
     inputs:
       pr:
         description: マージ対象の PR 番号
-        type: number
+        type: string
         required: true
     secrets:
       AUTO_MERGE_TOKEN:
@@ -22,7 +22,7 @@ on:
     inputs:
       pr:
         description: マージ対象の PR 番号
-        type: number
+        type: string
         required: true
 
 permissions:
