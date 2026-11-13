@@ -55,12 +55,14 @@ var _heart_tween: Tween
 @onready var window_out: Line2D = $WindowOut
 @onready var target_ring: Line2D = $TargetRing
 @onready var heart: Polygon2D = $Heart
+@onready var beat_label: Label = $BeatLabel
 
 func _ready() -> void:
 	_build_circle(pulse_ring, R_OUTER)
 	_build_circle(target_ring, R_TARGET)
 	_build_circle(window_in, R_TARGET)
 	_build_circle(window_out, R_TARGET)
+	_update_beat_label()
 	_sync_visuals()
 
 func get_feedback_map() -> Dictionary:
@@ -104,6 +106,7 @@ func mode_start() -> void:
 	beats = 0
 	_faults = 0
 	_reset_heart_pulse()
+	_update_beat_label()
 	_sync_visuals()
 
 func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
@@ -119,6 +122,7 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 			host.add_score(SUCCESS_SCORE)
 			phase = 0.0
 			_faults = 0
+			_update_beat_label()
 			_pulse_heart()
 		else:
 			_faults += 1
@@ -146,6 +150,12 @@ func _build_circle(line: Line2D, radius: float) -> void:
 
 func _ring_radius() -> float:
 	return R_OUTER * (1.0 - phase)
+
+# 成功の積み重ねを数字でも見えるようにする。スコアとは別に、リズムに
+# 乗れているかを確認するための表示（判定には影響しない）。
+func _update_beat_label() -> void:
+	if beat_label != null:
+		beat_label.text = "Beats: %d" % beats
 
 func _sync_visuals() -> void:
 	if pulse_ring != null:
