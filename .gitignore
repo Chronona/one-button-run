@@ -1,2 +1,6 @@
 .godot/
 build/
+
+# actrun のローカル実行が作る作業ディレクトリ
+_build/
+ws-*/
