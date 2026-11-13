@@ -35,6 +35,17 @@ const FEEDBACK_OFFSET := Vector2(0, -40)
 const RING_COLOR_APPROACH := Color(1.0, 0.9, 0.4, 1.0)
 const RING_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 1.0)
 
+# タップ結果の文字表示（見た目のみ）。成功の手応えと、まだ死なない
+# 1回目の空振りを区別できるようにする。判定・スコア・難易度には影響しない。
+const JUDGE_PERFECT := "PERFECT"
+const JUDGE_GOOD := "GOOD"
+const JUDGE_MISS := "MISS"
+const JUDGE_PERFECT_COLOR := Color(1.0, 0.95, 0.55, 1.0)
+const JUDGE_GOOD_COLOR := Color(0.55, 1.0, 0.6, 1.0)
+const JUDGE_MISS_COLOR := Color(1.0, 0.4, 0.45, 1.0)
+const JUDGE_PERFECT_RATIO := 0.35
+const JUDGE_FADE_SEC := 0.45
+
 # 成功時の鼓動（見た目のみ）。当たり判定は phase で行うので、
 # 伸縮しても難易度には影響しない。
 const HEART_PULSE := Vector2(1.5, 1.5)
@@ -49,6 +60,7 @@ var _failed: bool = false
 # 警告に留める。連打でごまかすと2回目で失敗するので、連打は通用しない。
 var _faults: int = 0
 var _heart_tween: Tween
+var _judge_tween: Tween
 
 @onready var pulse_ring: Line2D = $PulseRing
 @onready var window_in: Line2D = $WindowIn
@@ -56,6 +68,7 @@ var _heart_tween: Tween
 @onready var target_ring: Line2D = $TargetRing
 @onready var heart: Polygon2D = $Heart
 @onready var beat_label: Label = $BeatLabel
+@onready var judge_label: Label = $JudgeLabel
 
 func _ready() -> void:
 	_build_circle(pulse_ring, R_OUTER)
@@ -106,6 +119,7 @@ func mode_start() -> void:
 	beats = 0
 	_faults = 0
 	_reset_heart_pulse()
+	_reset_judge_label()
 	_update_beat_label()
 	_sync_visuals()
 
@@ -118,6 +132,10 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 	if act_pressed and not _failed:
 		host.emit_feedback("act")
 		if is_in_window(phase):
+			var is_perfect := absf(phase - TARGET_PHASE) <= current_half() * JUDGE_PERFECT_RATIO
+			_show_judge(
+				JUDGE_PERFECT if is_perfect else JUDGE_GOOD,
+				JUDGE_PERFECT_COLOR if is_perfect else JUDGE_GOOD_COLOR)
 			beats += 1
 			host.add_score(SUCCESS_SCORE)
 			phase = 0.0
@@ -125,6 +143,7 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 			_update_beat_label()
 			_pulse_heart()
 		else:
+			_show_judge(JUDGE_MISS, JUDGE_MISS_COLOR)
 			_faults += 1
 			if _faults >= 2:
 				_failed = true
@@ -156,6 +175,25 @@ func _ring_radius() -> float:
 func _update_beat_label() -> void:
 	if beat_label != null:
 		beat_label.text = "Beats: %d" % beats
+
+# 成功・空振りの結果を短く表示してフェードさせる。判定には使わない。
+func _show_judge(text: String, color: Color) -> void:
+	if judge_label == null:
+		return
+	if _judge_tween != null:
+		_judge_tween.kill()
+	judge_label.text = text
+	judge_label.add_theme_color_override("font_color", color)
+	judge_label.modulate.a = 1.0
+	_judge_tween = create_tween()
+	_judge_tween.tween_property(judge_label, "modulate:a", 0.0, JUDGE_FADE_SEC)
+
+func _reset_judge_label() -> void:
+	if _judge_tween != null:
+		_judge_tween.kill()
+	if judge_label != null:
+		judge_label.text = ""
+		judge_label.modulate.a = 1.0
 
 func _sync_visuals() -> void:
 	if pulse_ring != null:
