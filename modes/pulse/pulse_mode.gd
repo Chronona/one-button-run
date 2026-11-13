@@ -30,6 +30,11 @@ const FEEDBACK_MAP := {
 }
 const FEEDBACK_OFFSET := Vector2(0, -40)
 
+# 縮む輪の色。許容窓に入った瞬間に色が変わるので、数字を読まなくても
+# 叩くタイミングが分かる。判定には使わない見た目だけの手掛かり。
+const RING_COLOR_APPROACH := Color(1.0, 0.9, 0.4, 1.0)
+const RING_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 1.0)
+
 # 成功時の鼓動（見た目のみ）。当たり判定は phase で行うので、
 # 伸縮しても難易度には影響しない。
 const HEART_PULSE := Vector2(1.5, 1.5)
@@ -87,6 +92,11 @@ func window_start() -> float:
 func window_end() -> float:
 	return TARGET_PHASE + current_half()
 
+# その位相が許容窓に入っているか。判定と見た目の両方がこの関数を通るので、
+# 色の手掛かりと実際に成功するタイミングがずれない。
+func is_in_window(at_phase: float) -> bool:
+	return window_start() <= at_phase and at_phase <= window_end()
+
 func mode_start() -> void:
 	_elapsed = 0.0
 	_failed = false
@@ -104,7 +114,7 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 	# ボットが読む値と判定に使う値が同じなので、境界での食い違いが出ない。
 	if act_pressed and not _failed:
 		host.emit_feedback("act")
-		if window_start() <= phase and phase <= window_end():
+		if is_in_window(phase):
 			beats += 1
 			host.add_score(SUCCESS_SCORE)
 			phase = 0.0
@@ -141,6 +151,7 @@ func _sync_visuals() -> void:
 	if pulse_ring != null:
 		var base := Vector2.ONE * maxf(_ring_radius() / R_OUTER, 0.001)
 		pulse_ring.scale = base
+		pulse_ring.default_color = RING_COLOR_ON_TARGET if is_in_window(phase) else RING_COLOR_APPROACH
 	if window_in != null:
 		window_in.scale = Vector2.ONE * (R_TARGET - current_half() * R_OUTER) / R_TARGET
 	if window_out != null:
