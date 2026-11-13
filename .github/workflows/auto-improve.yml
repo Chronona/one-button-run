@@ -56,6 +56,17 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_ENV"
 
+      - name: 実行前の OPEN PR を控える
+        # この実行でできた PR を後で特定するため、実行前の OPEN PR を控える。
+        # 開いたままの古い PR（赤のまま放置されたもの）があっても取り違えないため、
+        # 作成時刻ではなく差分で「今回できた PR」を判定する。
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh pr list --state open --json number --jq '[.[].number]' \
+            > "$RUNNER_TEMP/open_prs_before.json"
+
       - name: Run OpenCode improvement
         uses: dceoy/opencode-action@0ff64486494c3134c46df6ce0e51eda4a64e349f # v0.7.3
         env:
@@ -125,3 +136,29 @@ jobs:
             exit 1
           fi
           echo "OK: 保護対象への変更はありません。"
+
+      - name: 今回できた PR を探す
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          found="$(gh pr list --state open --json number,headRefName \
+            | jq -r --slurpfile before "$RUNNER_TEMP/open_prs_before.json" \
+                'map(select(.number as $n | ($before[0] | index($n)) == null))
+                 | sort_by(.number) | last | select(. != null) | "\(.number) \(.headRefName)"')"
+          if [ -z "$found" ]; then
+            echo "::error::自動フローが作った PR が見つかりません（この実行では何もマージしません）"
+            exit 1
+          fi
+          echo "number=${found%% *}" >> "$GITHUB_OUTPUT"
+          echo "PR: $found"
+
+      - name: CI が緑になるまで待ち、マージする
+        # 判断基準は PR の CI だけ。承認とマージの具体的な手順は
+        # auto-merge.yml に置いてあり、手元でも単独で動かせるようにする。
+        uses: ./.github/workflows/auto-merge.yml
+        with:
+          pr: ${{ steps.pr.outputs.number }}
+        secrets:
+          AUTO_MERGE_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}

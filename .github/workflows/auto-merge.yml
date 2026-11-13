@@ -1,0 +1,77 @@
+name: Auto Merge
+
+# 日次フロー（auto-improve.yml）が作った PR を、CI が緑になった時点で
+# squash マージする。判断基準は PR の CI の結果だけで、
+# ワークフロー内の手元チェックは補助にすぎない。
+#
+# PAT（secrets.AUTO_MERGE_TOKEN）を使うのはこのワークフローの 2 ステップだけ。
+# GITHUB_TOKEN でマージすると main への push でワークフローが起動せず、
+# CI も Pages の公開も動かない（= ゲームが公開されない）ため PAT が必要。
+
+on:
+  workflow_call:
+    inputs:
+      pr:
+        description: マージ対象の PR 番号
+        type: number
+        required: true
+    secrets:
+      AUTO_MERGE_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: マージ対象の PR 番号
+        type: number
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    name: CI が緑になるまで待ってマージ
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: PR の CI を承認する
+        # GITHUB_TOKEN が作った PR の CI は approval-required 状態で止まる
+        # （GitHub の仕様。人が「Approve workflows to run」を押すまで走らない）。
+        # ここで承認しないと CI が一度も走らないため、自動マージの判断材料が
+        # 永久に「なし」のままになる。
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
+          PR: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          sha="$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)"
+          # run が登録されるまで少し時間がかかるので、見つからないときは待って繰り返す。
+          for _ in $(seq 1 12); do
+            run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?event=pull_request" \
+              --jq "[.workflow_runs[]
+                     | select(.head_sha == \"$sha\")
+                     | select(.conclusion == \"action_required\" or .status == \"action_required\")]
+                    | first | .id // empty" || true)"
+            if [ -n "$run_id" ]; then
+              gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve"
+              echo "承認しました: run $run_id"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::warning::承認待ちの CI 実行が見つかりませんでした（CI が自動で走っている場合はそのまま進みます）"
+
+      - name: CI が緑になったら自動でマージする設定にする
+        # 標準の auto-merge を使う。必須ステータスチェック（ruleset）が全部緑に
+        # なると、GitHub 側がマージを実行する。赤のままならマージは起きない。
+        # PAT で有効化しているのは、GITHUB_TOKEN だと main への push で
+        # ワークフローが起動せず（CI も Pages の公開も動かない）ため。
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
+          PR: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --auto --squash

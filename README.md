@@ -78,8 +78,8 @@ godot --headless --path . --script res://tests/run_tests.gd
 
 | ワークフロー | 実行 | 内容 |
 | --- | --- | --- |
-| `auto-improve.yml` | 毎日 06:00 JST | 小さな安全な改善を1件。射程は `modes/` 配下 |
-| `weekly-update.yml` | 毎週月曜 07:00 JST | 新しいジャンルのモードを追加し、`registry.json` の `active` を切り替える。作るジャンルは `docs/proposals/` の未実装の企画書から選ぶ |
+| `auto-improve.yml` | 毎日 06:00 JST | 小さな安全な改善を1件。射程は `modes/` 配下。生成した PR は CI が緑ると自動でマージする（[ADR 0011](docs/adr/0011-daily-auto-merge.md)） |
+| `weekly-update.yml` | 毎週月曜 07:00 JST | 新しいジャンルのモードを追加し、`registry.json` の `active` を切り替える。作るジャンルは `docs/proposals/` の未実装の企画書から選ぶ。生成した PR は人がレビューしてマージする |
 | `ci.yml` | PR ごと | L0 契約テスト、静的チェック、Web エクスポートの実走 |
 
 `docs/proposals/` に未実装の企画書があるとき、週次更新はジャンルを自分で決めずにその企画書を
@@ -89,16 +89,27 @@ godot --headless --path . --script res://tests/run_tests.gd
 ワークフロー定義は変更していないため、この運用をやめるときは ADR 0002 の追記節を消すだけで戻ります。
 
 どちらの自動フローも `core/`・`tests/`・`.github/workflows/` を変更できません（CI の
-`guard` ジョブが落とします）。生成された PR は人間がレビューしてマージします。
+`guard` ジョブが落とします）。生成された PR のマージは、日次が自動で、週次が人間です。
 
 > **注意:** `GITHUB_TOKEN` が作成した PR の CI は `approval-required` 状態で止まります
 > （[GitHub の仕様](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)）。
-> PR のマージボックスに出る **Approve workflows to run** を押すまで契約テストは走りません。
-> 押さずにマージすると、PR 本文のエージェントの自己申告しか根拠が無い状態になります。
-> このため両フローは、生成後に自分で `scripts/check.sh` と保護対象の検査を回して、
+> 日次フローは `auto-merge.yml` の中でこの承認を自動化しています
+> （`POST /actions/runs/{run_id}/approve`）。人が「Approve workflows to run」を押す
+> 必要はありません。週次フローの PR は人が「Approve workflows to run」を押して
+> CI を走らせ、レビューしてからマージします。
+> どちらのフローも、生成後に自分で `scripts/check.sh` と保護対象の検査を回して、
 > 失敗ならワークフロー実行自体を赤にします（Actions タブで確認できます）。
-> 恒久対策としては、main にブランチ保護を設定して CI を required status check に
-> するか、`GITHUB_TOKEN` の代わりに PAT / GitHub App トークンを使う方法があります。
+>
+> 日次の自動マージは GitHub 標準の auto-merge を使います。`main` の必須ステータスチェック
+> （`L0 契約テスト` と `契約テスト改変ガード`）が緑になると、GitHub 側が squash マージします。
+> 赤のままならマージは起きず、PR が開いたまま残ります。
+>
+> **日次の自動マージにはシークレット `AUTO_MERGE_TOKEN` が必要です。**
+> fine-grained PAT（対象はこのリポジトリ 1 つだけ、権限は Contents: Read and write /
+> Pull requests: Read and write / Actions: Read and write）を作り、
+> リポジトリのシークレットに登録してください。この PAT は承認と auto-merge の有効化の
+> 2 ステップだけで使い、エージェントの実行環境には渡しません。`GITHUB_TOKEN` でマージすると
+> `main` への push でワークフローが起動せず（CI も Pages の公開も動かない）ため、PAT が必要です。
 
 週次更新が不調だった場合は、`modes/registry.json` の `active` を前のモード ID に戻せば
 巻き戻せます。旧モードは削除されません。

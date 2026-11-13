@@ -22,3 +22,4 @@
 | [0008](0008-charge-split-shot.md) | チャージ投擲: 少ない投擲数で壊すと次ステージで弾が分裂する | proposed |
 | [0009](0009-score-bonus-hook.md) | スコア加点のフック: モードがホストの `add_score()` で加点する | proposed（決定4は 0010 が置き換え） |
 | [0010](0010-mode-owned-time-scoring.md) | 時間によるスコア加算をモードが選ぶ: チャージ投擲は標的破壊だけで加点する | proposed |
+| [0011](0011-daily-auto-merge.md) | 日次フローの PR の自動マージ | proposed |
