@@ -40,11 +40,14 @@ const RING_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 1.0)
 const JUDGE_PERFECT := "PERFECT"
 const JUDGE_GOOD := "GOOD"
 const JUDGE_MISS := "MISS"
+const JUDGE_MISS_WARNING := "MISS - あと1回"
 const JUDGE_PERFECT_COLOR := Color(1.0, 0.95, 0.55, 1.0)
 const JUDGE_GOOD_COLOR := Color(0.55, 1.0, 0.6, 1.0)
 const JUDGE_MISS_COLOR := Color(1.0, 0.4, 0.45, 1.0)
 const JUDGE_PERFECT_RATIO := 0.35
 const JUDGE_FADE_SEC := 0.45
+# 同じ拍で空振りできる回数。開始タップの空振りを1回目として数える。
+const MAX_FAULTS := 2
 
 # 成功時の鼓動（見た目のみ）。当たり判定は phase で行うので、
 # 伸縮しても難易度には影響しない。
@@ -143,10 +146,15 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 			_update_beat_label()
 			_pulse_heart()
 		else:
-			_show_judge(JUDGE_MISS, JUDGE_MISS_COLOR)
 			_faults += 1
-			if _faults >= 2:
+			_update_beat_label()
+			if _faults >= MAX_FAULTS:
+				_show_judge(JUDGE_MISS, JUDGE_MISS_COLOR)
 				_failed = true
+			else:
+				# 1回目の空振りは警告に留める。残り回数をその場で伝え、
+				# 次に外すと終わることが分かるようにする（判定には影響しない）。
+				_show_judge(JUDGE_MISS_WARNING, JUDGE_MISS_COLOR)
 
 	if not _failed:
 		phase += delta / period
@@ -174,7 +182,7 @@ func _ring_radius() -> float:
 # 乗れているかを確認するための表示（判定には影響しない）。
 func _update_beat_label() -> void:
 	if beat_label != null:
-		beat_label.text = "Beats: %d" % beats
+		beat_label.text = "Beats: %d   Miss: %d/%d" % [beats, _faults, MAX_FAULTS]
 
 # 成功・空振りの結果を短く表示してフェードさせる。判定には使わない。
 func _show_judge(text: String, color: Color) -> void:
