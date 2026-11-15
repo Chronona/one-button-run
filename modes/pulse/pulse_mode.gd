@@ -41,6 +41,7 @@ const JUDGE_PERFECT := "PERFECT"
 const JUDGE_GOOD := "GOOD"
 const JUDGE_MISS := "MISS"
 const JUDGE_MISS_WARNING := "MISS - あと1回"
+const JUDGE_TIMEOUT := "MISS - 輪が閉じた"
 const JUDGE_PERFECT_COLOR := Color(1.0, 0.95, 0.55, 1.0)
 const JUDGE_GOOD_COLOR := Color(0.55, 1.0, 0.6, 1.0)
 const JUDGE_MISS_COLOR := Color(1.0, 0.4, 0.45, 1.0)
@@ -56,6 +57,8 @@ const HEART_RECOVER_SEC := 0.2
 
 var phase: float = 0.0
 var beats: int = 0
+# 連続成功数。ミスで0に戻り、成功のたびに伸びる（表示のみ）。
+var streak: int = 0
 
 var _elapsed: float = 0.0
 var _failed: bool = false
@@ -120,6 +123,7 @@ func mode_start() -> void:
 	_failed = false
 	phase = 0.0
 	beats = 0
+	streak = 0
 	_faults = 0
 	_reset_heart_pulse()
 	_reset_judge_label()
@@ -140,12 +144,14 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 				JUDGE_PERFECT if is_perfect else JUDGE_GOOD,
 				JUDGE_PERFECT_COLOR if is_perfect else JUDGE_GOOD_COLOR)
 			beats += 1
+			streak += 1
 			host.add_score(SUCCESS_SCORE)
 			phase = 0.0
 			_faults = 0
 			_update_beat_label()
 			_pulse_heart()
 		else:
+			streak = 0
 			_faults += 1
 			_update_beat_label()
 			if _faults >= MAX_FAULTS:
@@ -161,6 +167,10 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 		if phase >= 1.0:
 			phase = 1.0
 			_failed = true
+			streak = 0
+			_update_beat_label()
+			# 失敗の理由をその場で伝える。判定には影響しない。
+			_show_judge(JUDGE_TIMEOUT, JUDGE_MISS_COLOR)
 
 	_sync_visuals()
 
@@ -182,7 +192,7 @@ func _ring_radius() -> float:
 # 乗れているかを確認するための表示（判定には影響しない）。
 func _update_beat_label() -> void:
 	if beat_label != null:
-		beat_label.text = "Beats: %d   Miss: %d/%d" % [beats, _faults, MAX_FAULTS]
+		beat_label.text = "Beats: %d   Combo: %d   Miss: %d/%d" % [beats, streak, _faults, MAX_FAULTS]
 
 # 成功・空振りの結果を短く表示してフェードさせる。判定には使わない。
 func _show_judge(text: String, color: Color) -> void:
