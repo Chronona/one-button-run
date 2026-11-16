@@ -40,7 +40,9 @@ const RING_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 1.0)
 const JUDGE_PERFECT := "PERFECT"
 const JUDGE_GOOD := "GOOD"
 const JUDGE_MISS := "MISS"
-const JUDGE_MISS_WARNING := "MISS - あと1回"
+const JUDGE_EARLY := "早い"
+const JUDGE_LATE := "遅い"
+const JUDGE_MISS_WARNING_SUFFIX := " / あと1回"
 const JUDGE_TIMEOUT := "MISS - 輪が閉じた"
 const JUDGE_PERFECT_COLOR := Color(1.0, 0.95, 0.55, 1.0)
 const JUDGE_GOOD_COLOR := Color(0.55, 1.0, 0.6, 1.0)
@@ -154,13 +156,19 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 			streak = 0
 			_faults += 1
 			_update_beat_label()
+			# 窓のどちら側で外したかを伝える。次に叩くタイミングを
+			# 調整しやすくするための表示で、判定には影響しない。
+			var miss_text := "%s - %s" % [
+				JUDGE_MISS,
+				JUDGE_EARLY if phase < window_start() else JUDGE_LATE,
+			]
 			if _faults >= MAX_FAULTS:
-				_show_judge(JUDGE_MISS, JUDGE_MISS_COLOR)
+				_show_judge(miss_text, JUDGE_MISS_COLOR)
 				_failed = true
 			else:
 				# 1回目の空振りは警告に留める。残り回数をその場で伝え、
 				# 次に外すと終わることが分かるようにする（判定には影響しない）。
-				_show_judge(JUDGE_MISS_WARNING, JUDGE_MISS_COLOR)
+				_show_judge(miss_text + JUDGE_MISS_WARNING_SUFFIX, JUDGE_MISS_COLOR)
 
 	if not _failed:
 		phase += delta / period
