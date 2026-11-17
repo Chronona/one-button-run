@@ -35,12 +35,13 @@ const FEEDBACK_OFFSET := Vector2(0, -40)
 const RING_COLOR_APPROACH := Color(1.0, 0.9, 0.4, 1.0)
 const RING_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 1.0)
 
-# タップ結果の文字表示（見た目のみ）。成功の手応えと、まだ死なない
-# 1回目の空振りを区別できるようにする。判定・スコア・難易度には影響しない。
+# タップ結果の文字表示（見た目のみ）。成功の手応えと、早すぎ/遅すぎの別、
+# まだ死なない1回目の空振りを区別できるようにする。判定・スコア・難易度には影響しない。
 const JUDGE_PERFECT := "PERFECT"
 const JUDGE_GOOD := "GOOD"
-const JUDGE_MISS := "MISS"
-const JUDGE_MISS_WARNING := "MISS - あと1回"
+const JUDGE_EARLY := "MISS - 早すぎ"
+const JUDGE_LATE := "MISS - 遅すぎ"
+const JUDGE_ONE_MORE := " (あと1回)"
 const JUDGE_TIMEOUT := "MISS - 輪が閉じた"
 const JUDGE_PERFECT_COLOR := Color(1.0, 0.95, 0.55, 1.0)
 const JUDGE_GOOD_COLOR := Color(0.55, 1.0, 0.6, 1.0)
@@ -48,7 +49,7 @@ const JUDGE_MISS_COLOR := Color(1.0, 0.4, 0.45, 1.0)
 const JUDGE_PERFECT_RATIO := 0.35
 const JUDGE_FADE_SEC := 0.45
 # 同じ拍で空振りできる回数。開始タップの空振りを1回目として数える。
-const MAX_FAULTS := 2
+const MAX_MISSES_PER_BEAT := 2
 
 # 成功時の鼓動（見た目のみ）。当たり判定は phase で行うので、
 # 伸縮しても難易度には影響しない。
@@ -64,7 +65,7 @@ var _elapsed: float = 0.0
 var _failed: bool = false
 # 同じ拍での空振り回数。開始タップは判定の前に来るため、初回の空振りは
 # 警告に留める。連打でごまかすと2回目で失敗するので、連打は通用しない。
-var _faults: int = 0
+var _misses_in_beat: int = 0
 var _heart_tween: Tween
 var _judge_tween: Tween
 
@@ -124,7 +125,7 @@ func mode_start() -> void:
 	phase = 0.0
 	beats = 0
 	streak = 0
-	_faults = 0
+	_misses_in_beat = 0
 	_reset_heart_pulse()
 	_reset_judge_label()
 	_update_beat_label()
@@ -147,20 +148,21 @@ func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 			streak += 1
 			host.add_score(SUCCESS_SCORE)
 			phase = 0.0
-			_faults = 0
+			_misses_in_beat = 0
 			_update_beat_label()
 			_pulse_heart()
 		else:
 			streak = 0
-			_faults += 1
+			_misses_in_beat += 1
 			_update_beat_label()
-			if _faults >= MAX_FAULTS:
-				_show_judge(JUDGE_MISS, JUDGE_MISS_COLOR)
+			var miss_text := _miss_timing_text()
+			if _misses_in_beat >= MAX_MISSES_PER_BEAT:
+				_show_judge(miss_text, JUDGE_MISS_COLOR)
 				_failed = true
 			else:
-				# 1回目の空振りは警告に留める。残り回数をその場で伝え、
+				# 1回目の空振りは警告に留める。早い/遅いの別と残り回数をその場で伝え、
 				# 次に外すと終わることが分かるようにする（判定には影響しない）。
-				_show_judge(JUDGE_MISS_WARNING, JUDGE_MISS_COLOR)
+				_show_judge(miss_text + JUDGE_ONE_MORE, JUDGE_MISS_COLOR)
 
 	if not _failed:
 		phase += delta / period
@@ -192,7 +194,12 @@ func _ring_radius() -> float:
 # 乗れているかを確認するための表示（判定には影響しない）。
 func _update_beat_label() -> void:
 	if beat_label != null:
-		beat_label.text = "Beats: %d   Combo: %d   Miss: %d/%d" % [beats, streak, _faults, MAX_FAULTS]
+		beat_label.text = "Beats: %d   Combo: %d   Miss: %d/%d" % [beats, streak, _misses_in_beat, MAX_MISSES_PER_BEAT]
+
+# 空振りが早すぎたのか遅すぎたのかを返す。窓の左側なら早すぎ、右側なら遅すぎ。
+# 次に同じ失敗を繰り返さないための手掛かりで、判定そのものには影響しない。
+func _miss_timing_text() -> String:
+	return JUDGE_EARLY if phase < window_start() else JUDGE_LATE
 
 # 成功・空振りの結果を短く表示してフェードさせる。判定には使わない。
 func _show_judge(text: String, color: Color) -> void:
