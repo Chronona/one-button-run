@@ -30,10 +30,12 @@ const FEEDBACK_MAP := {
 }
 const FEEDBACK_OFFSET := Vector2(0, -40)
 
-# 縮む輪の色。許容窓に入った瞬間に色が変わるので、数字を読まなくても
-# 叩くタイミングが分かる。判定には使わない見た目だけの手掛かり。
+# 縮む輪の色。許容窓に入る前は黄、窓の中は緑、通り過ぎたら橙にして、
+# 数字を読まなくても早い/遅いの向きが分かるようにする。
+# 判定には使わない見た目だけの手掛かり。
 const RING_COLOR_APPROACH := Color(1.0, 0.9, 0.4, 1.0)
 const RING_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 1.0)
+const RING_COLOR_TOO_LATE := Color(1.0, 0.45, 0.35, 1.0)
 
 # タップ結果の文字表示（見た目のみ）。成功の手応えと、早すぎ/遅すぎの別、
 # まだ死なない1回目の空振りを区別できるようにする。判定・スコア・難易度には影響しない。
@@ -224,11 +226,20 @@ func _sync_visuals() -> void:
 	if pulse_ring != null:
 		var base := Vector2.ONE * maxf(_ring_radius() / R_OUTER, 0.001)
 		pulse_ring.scale = base
-		pulse_ring.default_color = RING_COLOR_ON_TARGET if is_in_window(phase) else RING_COLOR_APPROACH
+		pulse_ring.default_color = _ring_color()
 	if window_in != null:
 		window_in.scale = Vector2.ONE * (R_TARGET - current_half() * R_OUTER) / R_TARGET
 	if window_out != null:
 		window_out.scale = Vector2.ONE * (R_TARGET + current_half() * R_OUTER) / R_TARGET
+
+# 今の位相に対応する輪の色。窓の手前は黄、窓の中は緑、窓を過ぎたら橙。
+# 色は見た目だけの手掛かりで、判定には使わない。
+func _ring_color() -> Color:
+	if is_in_window(phase):
+		return RING_COLOR_ON_TARGET
+	if phase > window_end():
+		return RING_COLOR_TOO_LATE
+	return RING_COLOR_APPROACH
 
 # 見た目だけの鼓動。判定（phase）には触らない。
 func _pulse_heart() -> void:
