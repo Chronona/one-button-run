@@ -1,0 +1,36 @@
+{
+  "id": "stack",
+  "description": "ブロック積みモードの契約値。タップ = 左右に往復するブロックをいまの位置で落とす。塔から外れると失敗。難易度はブロックの移動速度。",
+  "act_semantics": "drop-block",
+  "input_isolated_scripts": [
+    "res://modes/stack/stack_mode.gd"
+  ],
+  "required_feedback_events": [
+    "act",
+    "fail",
+    "record"
+  ],
+  "dual_channel_feedback_events": [
+    "act",
+    "fail"
+  ],
+  "required_export_presets": [
+    "Web"
+  ],
+  "grace_seconds": 1.2,
+  "grace_seconds_min": 1.0,
+  "idle_death_max_seconds": 10.0,
+  "bot": "res://modes/stack/bot.gd",
+  "bot_min_survival_seconds": 180.0,
+  "bot_seeds": [
+    1,
+    7,
+    42,
+    555,
+    1337,
+    2024,
+    77777,
+    20260915
+  ],
+  "max_speed_cap": 480.0
+}
