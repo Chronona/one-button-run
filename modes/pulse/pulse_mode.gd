@@ -37,6 +37,14 @@ const RING_COLOR_APPROACH := Color(1.0, 0.9, 0.4, 1.0)
 const RING_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 1.0)
 const RING_COLOR_TOO_LATE := Color(1.0, 0.45, 0.35, 1.0)
 
+# 許容窓のガイド色。縮む輪と同じ色にそろえて「いま窓の中か、通り過ぎたか」を
+# 一目で分かるようにする。空振りが残り1回になると赤にして、次を外すと
+# 終わることを強調する。いずれも判定には使わない見た目だけの手掛かり。
+const WINDOW_COLOR_IDLE := Color(1.0, 0.35, 0.6, 0.35)
+const WINDOW_COLOR_ON_TARGET := Color(0.55, 1.0, 0.6, 0.55)
+const WINDOW_COLOR_TOO_LATE := Color(1.0, 0.45, 0.35, 0.55)
+const WINDOW_COLOR_LAST_CHANCE := Color(1.0, 0.25, 0.3, 0.7)
+
 # タップ結果の文字表示（見た目のみ）。成功の手応えと、早すぎ/遅すぎの別、
 # まだ死なない1回目の空振りを区別できるようにする。判定・スコア・難易度には影響しない。
 const JUDGE_PERFECT := "PERFECT"
@@ -223,14 +231,17 @@ func _reset_judge_label() -> void:
 		judge_label.modulate.a = 1.0
 
 func _sync_visuals() -> void:
+	var window_color := _window_color()
 	if pulse_ring != null:
 		var base := Vector2.ONE * maxf(_ring_radius() / R_OUTER, 0.001)
 		pulse_ring.scale = base
 		pulse_ring.default_color = _ring_color()
 	if window_in != null:
 		window_in.scale = Vector2.ONE * (R_TARGET - current_half() * R_OUTER) / R_TARGET
+		window_in.default_color = window_color
 	if window_out != null:
 		window_out.scale = Vector2.ONE * (R_TARGET + current_half() * R_OUTER) / R_TARGET
+		window_out.default_color = window_color
 
 # 今の位相に対応する輪の色。窓の手前は黄、窓の中は緑、窓を過ぎたら橙。
 # 色は見た目だけの手掛かりで、判定には使わない。
@@ -240,6 +251,17 @@ func _ring_color() -> Color:
 	if phase > window_end():
 		return RING_COLOR_TOO_LATE
 	return RING_COLOR_APPROACH
+
+# 許容窓のガイド色。窓の中は緑を優先し、その外側で残り1回の空振りなら
+# 赤にして「次を外すと終わる」ことを警告する。判定には使わない。
+func _window_color() -> Color:
+	if is_in_window(phase):
+		return WINDOW_COLOR_ON_TARGET
+	if _misses_in_beat >= MAX_MISSES_PER_BEAT - 1:
+		return WINDOW_COLOR_LAST_CHANCE
+	if phase > window_end():
+		return WINDOW_COLOR_TOO_LATE
+	return WINDOW_COLOR_IDLE
 
 # 見た目だけの鼓動。判定（phase）には触らない。
 func _pulse_heart() -> void:
