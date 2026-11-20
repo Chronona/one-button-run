@@ -163,16 +163,19 @@ func _drop_block() -> void:
 	_scroll_tower()
 	_spawn_block()
 
-func _add_block(center_x: float, width: float, center_y: float, color: Color) -> void:
-	var node := Polygon2D.new()
+func _make_block_polygon(width: float) -> PackedVector2Array:
 	var half_width := width * 0.5
 	var half_height := BLOCK_HEIGHT * 0.5
-	node.polygon = PackedVector2Array([
+	return PackedVector2Array([
 		Vector2(-half_width, -half_height),
 		Vector2(half_width, -half_height),
 		Vector2(half_width, half_height),
 		Vector2(-half_width, half_height),
 	])
+
+func _add_block(center_x: float, width: float, center_y: float, color: Color) -> void:
+	var node := Polygon2D.new()
+	node.polygon = _make_block_polygon(width)
 	node.position = Vector2(center_x, center_y)
 	node.color = color
 	tower.add_child(node)
@@ -207,14 +210,7 @@ func _spawn_block() -> void:
 func _set_moving_shape() -> void:
 	if moving_block == null:
 		return
-	var half_width := block_width * 0.5
-	var half_height := BLOCK_HEIGHT * 0.5
-	moving_block.polygon = PackedVector2Array([
-		Vector2(-half_width, -half_height),
-		Vector2(half_width, -half_height),
-		Vector2(half_width, half_height),
-		Vector2(-half_width, half_height),
-	])
+	moving_block.polygon = _make_block_polygon(block_width)
 
 func _sync_visuals() -> void:
 	if moving_block != null:
