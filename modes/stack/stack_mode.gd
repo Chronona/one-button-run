@@ -28,6 +28,8 @@ const BLOCK_COLORS := [
 	Color(0.96, 0.62, 0.54, 1.0),
 ]
 const PERFECT_COLOR := Color(1.0, 0.88, 0.38, 1.0)
+const GUIDE_COLOR := Color(0.45, 0.8, 1, 0.28)
+const GUIDE_PERFECT_COLOR := Color(1.0, 0.88, 0.38, 0.6)
 
 const FEEDBACK_MAP := {
 	"act": {"particles": "PlaceParticles", "se": "PlaceSE"},
@@ -221,6 +223,9 @@ func _sync_visuals() -> void:
 			Vector2(moving_x, HOVER_Y + BLOCK_HEIGHT * 0.5),
 			Vector2(moving_x, top_y),
 		])
+		# ぴったり重なる位置ではガイドを金色にして、PERFECT の狙いどころを伝える。
+		var perfect_ready := absf(moving_x - top_center) <= TRIM_FREE_TOL
+		guide.default_color = GUIDE_PERFECT_COLOR if perfect_ready else GUIDE_COLOR
 		guide.visible = not _failed
 
 func _update_label() -> void:
