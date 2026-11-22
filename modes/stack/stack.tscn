@@ -74,6 +74,17 @@ theme_override_font_sizes/font_size = 24
 text = "Height: 0"
 horizontal_alignment = 2
 
+[node name="PerfectLabel" type="Label" parent="."]
+visible = false
+offset_left = 426.0
+offset_top = 72.0
+offset_right = 726.0
+offset_bottom = 112.0
+theme_override_colors/font_color = Color(1, 0.88, 0.38, 1)
+theme_override_font_sizes/font_size = 32
+text = "PERFECT!"
+horizontal_alignment = 1
+
 [node name="PlaceParticles" type="CPUParticles2D" parent="."]
 emitting = false
 one_shot = true
