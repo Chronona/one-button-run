@@ -20,6 +20,7 @@ const TRIM_FREE_TOL := 14.0
 const MIN_BLOCK_WIDTH := 16.0
 const PERFECT_SCORE := 10.0
 const STACK_SCORE := 3.0
+const PERFECT_FLASH_SEC := 0.7
 
 const BLOCK_COLORS := [
 	Color(0.32, 0.72, 0.96, 1.0),
@@ -50,12 +51,14 @@ var _failed: bool = false
 var _drop_timer: float = 0.0
 var _top_surface_local_y: float = BASE_TOP
 var _spawn_index: int = 0
+var _perfect_flash_timer: float = 0.0
 
 @onready var tower: Node2D = $Tower
 @onready var base_block: Polygon2D = $Tower/BaseBlock
 @onready var moving_block: Polygon2D = $MovingBlock
 @onready var guide: Line2D = $Guide
 @onready var height_label: Label = $HeightLabel
+@onready var perfect_label: Label = $PerfectLabel
 
 func get_feedback_map() -> Dictionary:
 	return FEEDBACK_MAP
@@ -90,13 +93,16 @@ func mode_start() -> void:
 	height = 0
 	_top_surface_local_y = BASE_TOP
 	_spawn_index = 0
+	_perfect_flash_timer = 0.0
 	tower.position = Vector2.ZERO
 	_clear_blocks()
 	_spawn_block()
 	_update_label()
+	_update_perfect_label()
 	_sync_visuals()
 
 func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
+	_update_perfect_flash(delta)
 	if _failed:
 		return
 
@@ -161,6 +167,8 @@ func _drop_block() -> void:
 		host.add_score(PERFECT_SCORE if perfect else STACK_SCORE)
 	height += 1
 	host.emit_feedback("act")
+	if perfect:
+		_flash_perfect()
 	_update_label()
 	_scroll_tower()
 	_spawn_block()
@@ -231,6 +239,20 @@ func _sync_visuals() -> void:
 func _update_label() -> void:
 	if height_label != null:
 		height_label.text = "Height: %d" % height
+
+func _flash_perfect() -> void:
+	_perfect_flash_timer = PERFECT_FLASH_SEC
+	_update_perfect_label()
+
+func _update_perfect_flash(delta: float) -> void:
+	if _perfect_flash_timer <= 0.0:
+		return
+	_perfect_flash_timer = maxf(0.0, _perfect_flash_timer - delta)
+	_update_perfect_label()
+
+func _update_perfect_label() -> void:
+	if perfect_label != null:
+		perfect_label.visible = _perfect_flash_timer > 0.0
 
 func _clear_blocks() -> void:
 	for child in tower.get_children():
