@@ -52,6 +52,7 @@ var _drop_timer: float = 0.0
 var _top_surface_local_y: float = BASE_TOP
 var _spawn_index: int = 0
 var _perfect_flash_timer: float = 0.0
+var _perfect_streak: int = 0
 
 @onready var tower: Node2D = $Tower
 @onready var base_block: Polygon2D = $Tower/BaseBlock
@@ -94,6 +95,7 @@ func mode_start() -> void:
 	_top_surface_local_y = BASE_TOP
 	_spawn_index = 0
 	_perfect_flash_timer = 0.0
+	_perfect_streak = 0
 	tower.position = Vector2.ZERO
 	_clear_blocks()
 	_spawn_block()
@@ -147,9 +149,14 @@ func _drop_block() -> void:
 
 	if overlap <= 0.0 or overlap < MIN_BLOCK_WIDTH:
 		_failed = true
+		_perfect_streak = 0
 		return
 
 	var perfect := absf(moving_x - top_center) <= TRIM_FREE_TOL
+	if perfect:
+		_perfect_streak += 1
+	else:
+		_perfect_streak = 0
 	var new_center := (overlap_left + overlap_right) * 0.5
 	var new_width := overlap
 	if perfect:
@@ -242,6 +249,8 @@ func _update_label() -> void:
 
 func _flash_perfect() -> void:
 	_perfect_flash_timer = PERFECT_FLASH_SEC
+	if perfect_label != null:
+		perfect_label.text = "PERFECT!" if _perfect_streak < 2 else "PERFECT! x%d" % _perfect_streak
 	_update_perfect_label()
 
 func _update_perfect_flash(delta: float) -> void:
