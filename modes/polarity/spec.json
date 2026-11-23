@@ -1,0 +1,37 @@
+{
+  "id": "polarity",
+  "description": "極性切り替えモードの契約値。タップ = 自機のフェーズ反転。フェーズが同じ壁は実体化して当たり、違う壁はすり抜ける。壁は織り交ぜて迫り、接触で失敗。難易度はスクロール速度。",
+  "act_semantics": "toggle-phase",
+  "input_isolated_scripts": [
+    "res://modes/polarity/polarity_mode.gd",
+    "res://modes/polarity/polarity_barrier.gd"
+  ],
+  "required_feedback_events": [
+    "act",
+    "fail",
+    "record"
+  ],
+  "dual_channel_feedback_events": [
+    "act",
+    "fail"
+  ],
+  "required_export_presets": [
+    "Web"
+  ],
+  "grace_seconds": 1.2,
+  "grace_seconds_min": 1.0,
+  "idle_death_max_seconds": 10.0,
+  "bot": "res://modes/polarity/bot.gd",
+  "bot_min_survival_seconds": 180.0,
+  "bot_seeds": [
+    1,
+    7,
+    42,
+    555,
+    1337,
+    2024,
+    77777,
+    20260915
+  ],
+  "max_speed_cap": 480.0
+}
