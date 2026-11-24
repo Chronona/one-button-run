@@ -1,13 +1,11 @@
 extends Node2D
 
+const PALETTE = preload("res://modes/polarity/palette.gd")
+
 const WIDTH := 56.0
 const HEIGHT := 760.0
 const TOP := -80.0
 const EDGE_WIDTH := 4.0
-const PHASE_COLORS := [
-	Color(0.20, 0.92, 1.0, 1.0),
-	Color(1.0, 0.38, 0.82, 1.0),
-]
 
 var phase: int = 0
 var speed: float = 200.0
@@ -42,7 +40,7 @@ func collides_with(body: Rect2) -> bool:
 
 func set_player_phase(p_player_phase: int) -> void:
 	var danger := phase == p_player_phase
-	var base: Color = PHASE_COLORS[phase]
+	var base: Color = PALETTE.COLORS[phase]
 	if _body_poly != null:
 		_body_poly.color = Color(base.r, base.g, base.b, 0.90 if danger else 0.20)
 	for stripe in _stripes:
@@ -60,7 +58,7 @@ func _build_visuals() -> void:
 		Vector2(WIDTH, TOP + HEIGHT),
 		Vector2(0.0, TOP + HEIGHT),
 	])
-	_body_poly.color = PHASE_COLORS[phase]
+	_body_poly.color = PALETTE.COLORS[phase]
 	add_child(_body_poly)
 
 	_edge_left = _make_edge(0.0)
@@ -89,5 +87,5 @@ func _make_edge(x: float) -> Line2D:
 		Vector2(x, TOP),
 		Vector2(x, TOP + HEIGHT),
 	])
-	edge.default_color = PHASE_COLORS[phase]
+	edge.default_color = PALETTE.COLORS[phase]
 	return edge

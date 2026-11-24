@@ -1,6 +1,7 @@
 extends "res://core/game_mode.gd"
 
 const BARRIER_SCRIPT: GDScript = preload("res://modes/polarity/polarity_barrier.gd")
+const PALETTE = preload("res://modes/polarity/palette.gd")
 
 const PLAYER_X := 220.0
 const PLAYER_Y := 324.0
@@ -17,11 +18,6 @@ const MIN_SPAWN_INTERVAL := 0.86
 const SPAWN_INTERVAL_RANDOM := 0.18
 const INITIAL_SPAWN_COOLDOWN := 0.8
 
-const PHASE_COLORS := [
-	Color(0.20, 0.92, 1.0, 1.0),
-	Color(1.0, 0.38, 0.82, 1.0),
-]
-const PHASE_NAMES := ["CYAN", "MAGENTA"]
 const FLIP_PULSE := Vector2(1.35, 1.35)
 const FLIP_RECOVER_SEC := 0.16
 
@@ -136,11 +132,11 @@ func _check_collision() -> void:
 
 func _sync_player() -> void:
 	if player != null:
-		player.color = PHASE_COLORS[player_phase]
+		player.color = PALETTE.COLORS[player_phase]
 
 func _update_phase_feedback() -> void:
 	if flip_particles != null:
-		flip_particles.color = PHASE_COLORS[player_phase]
+		flip_particles.color = PALETTE.COLORS[player_phase]
 	if flip_se != null:
 		flip_se.pitch_scale = 1.2 if player_phase == 0 else 1.5
 
@@ -163,5 +159,5 @@ func _reset_flip_pulse() -> void:
 
 func _update_label() -> void:
 	if phase_label != null:
-		phase_label.text = "PHASE: %s" % PHASE_NAMES[player_phase]
-		phase_label.modulate = PHASE_COLORS[player_phase]
+		phase_label.text = "PHASE: %s" % PALETTE.NAMES[player_phase]
+		phase_label.modulate = PALETTE.COLORS[player_phase]
