@@ -4,7 +4,8 @@
   "act_semantics": "toggle-phase",
   "input_isolated_scripts": [
     "res://modes/polarity/polarity_mode.gd",
-    "res://modes/polarity/polarity_barrier.gd"
+    "res://modes/polarity/polarity_barrier.gd",
+    "res://modes/polarity/palette.gd"
   ],
   "required_feedback_events": [
     "act",
