@@ -9,6 +9,12 @@ const PLAYER_HALF := 20.0
 const PLAYER_SIZE := Vector2(40.0, 40.0)
 const FEEDBACK_OFFSET := Vector2(20.0, 20.0)
 
+# 自機のフェーズはこの数で循環する（0=シアン, 1=マゼンタ）。
+const PHASE_COUNT := 2
+# 同フェーズの壁がこの距離まで迫ったら「反転!」を出して注意を促す。
+# 見た目だけの手掛かりで、当たり判定や難易度には影響しない。
+const DANGER_LOOKAHEAD := 200.0
+
 const BASE_SPEED := 200.0
 const SPEED_PER_SECOND := 1.5
 const MAX_SPEED := 480.0
@@ -40,6 +46,7 @@ var _flip_tween: Tween
 @onready var flip_particles: CPUParticles2D = $FlipParticles
 @onready var flip_se: AudioStreamPlayer = $FlipSE
 @onready var phase_label: Label = $PhaseLabel
+@onready var danger_label: Label = $DangerLabel
 
 func get_feedback_map() -> Dictionary:
 	return FEEDBACK_MAP
@@ -74,13 +81,14 @@ func mode_start() -> void:
 	_reset_flip_pulse()
 	_sync_player()
 	_update_label()
+	_set_danger_cue(false)
 
 func mode_tick(delta: float, act_pressed: bool, _act_released: bool) -> void:
 	_elapsed += delta
 	scroll_speed = minf(BASE_SPEED + _elapsed * SPEED_PER_SECOND, MAX_SPEED)
 
 	if act_pressed and not _failed:
-		player_phase = 1 - player_phase
+		player_phase = (player_phase + 1) % PHASE_COUNT
 		_pulse_flip()
 		_update_phase_feedback()
 		host.emit_feedback("act")
@@ -103,7 +111,7 @@ func spawn_barrier() -> void:
 	barrier.position = Vector2(SPAWN_X, 0.0)
 	add_child(barrier)
 	barrier.set_player_phase(player_phase)
-	_next_phase = host.get_rng().randi() % 2
+	_next_phase = host.get_rng().randi() % PHASE_COUNT
 
 func _advance_barriers(delta: float) -> void:
 	for barrier in _live_barriers():
@@ -125,10 +133,24 @@ func _despawn(barrier: Node) -> void:
 
 func _check_collision() -> void:
 	var body := get_body_rect()
+	var danger_near := false
 	for barrier in _live_barriers():
-		if barrier.phase == player_phase and barrier.collides_with(body):
+		if barrier.phase != player_phase:
+			continue
+		if barrier.collides_with(body):
 			_failed = true
+			_set_danger_cue(false)
 			return
+		var gap: float = barrier.position.x - body.end.x
+		if gap >= 0.0 and gap <= DANGER_LOOKAHEAD:
+			danger_near = true
+	_set_danger_cue(danger_near)
+
+# 同フェーズの壁が迫っているときだけ「反転!」を表示する。判定は _check_collision の
+# 1パスに相乗りさせ、毎フレームの走査を増やさない。
+func _set_danger_cue(active: bool) -> void:
+	if danger_label != null and danger_label.visible != active:
+		danger_label.visible = active
 
 func _sync_player() -> void:
 	if player != null:
