@@ -14,6 +14,9 @@ const PHASE_COUNT := 2
 # 同フェーズの壁がこの距離まで迫ったら「反転!」を出して注意を促す。
 # 見た目だけの手掛かりで、当たり判定や難易度には影響しない。
 const DANGER_LOOKAHEAD := 200.0
+# 警告中のラベルは点滅させて視界の端でも気づきやすくする（見た目のみ）。
+const DANGER_PULSE_SPEED := 9.0
+const DANGER_PULSE_MIN_ALPHA := 0.5
 
 const BASE_SPEED := 200.0
 const SPEED_PER_SECOND := 1.5
@@ -149,8 +152,16 @@ func _check_collision() -> void:
 # 同フェーズの壁が迫っているときだけ「反転!」を表示する。判定は _check_collision の
 # 1パスに相乗りさせ、毎フレームの走査を増やさない。
 func _set_danger_cue(active: bool) -> void:
-	if danger_label != null and danger_label.visible != active:
+	if danger_label == null:
+		return
+	if danger_label.visible != active:
 		danger_label.visible = active
+	if active:
+		# _elapsed から透明度を決めるので、タイマーや Tween を増やさず決定論的なまま。
+		var pulse := 0.5 + 0.5 * sin(_elapsed * DANGER_PULSE_SPEED)
+		danger_label.modulate.a = lerpf(DANGER_PULSE_MIN_ALPHA, 1.0, pulse)
+	else:
+		danger_label.modulate.a = 1.0
 
 func _sync_player() -> void:
 	if player != null:
