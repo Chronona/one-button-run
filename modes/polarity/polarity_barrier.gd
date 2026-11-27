@@ -7,6 +7,16 @@ const HEIGHT := 760.0
 const TOP := -80.0
 const EDGE_WIDTH := 4.0
 
+# 同フェーズの壁だけを濃く描き、すり抜けられる壁は薄く見せる。
+# 当たり判定には影響しない、見た目だけの強弱。
+const BODY_ALPHA_DANGER := 0.90
+const BODY_ALPHA_SAFE := 0.20
+const STRIPE_ALPHA_DANGER := 0.55
+const STRIPE_ALPHA_SAFE := 0.10
+const EDGE_ALPHA_DANGER := 1.0
+const EDGE_ALPHA_SAFE := 0.30
+const STRIPE_COLOR := Color(1.0, 1.0, 1.0, 1.0)
+
 var phase: int = 0
 var speed: float = 200.0
 
@@ -41,14 +51,20 @@ func collides_with(body: Rect2) -> bool:
 func set_player_phase(p_player_phase: int) -> void:
 	var danger := phase == p_player_phase
 	var base: Color = PALETTE.COLORS[phase]
+	var body_alpha := BODY_ALPHA_DANGER if danger else BODY_ALPHA_SAFE
+	var stripe_alpha := STRIPE_ALPHA_DANGER if danger else STRIPE_ALPHA_SAFE
+	var edge_alpha := EDGE_ALPHA_DANGER if danger else EDGE_ALPHA_SAFE
 	if _body_poly != null:
-		_body_poly.color = Color(base.r, base.g, base.b, 0.90 if danger else 0.20)
+		_body_poly.color = _with_alpha(base, body_alpha)
 	for stripe in _stripes:
-		stripe.default_color = Color(1.0, 1.0, 1.0, 0.55 if danger else 0.10)
+		stripe.default_color = _with_alpha(STRIPE_COLOR, stripe_alpha)
 	if _edge_left != null:
-		_edge_left.default_color = Color(base.r, base.g, base.b, 1.0 if danger else 0.30)
+		_edge_left.default_color = _with_alpha(base, edge_alpha)
 	if _edge_right != null:
-		_edge_right.default_color = Color(base.r, base.g, base.b, 1.0 if danger else 0.30)
+		_edge_right.default_color = _with_alpha(base, edge_alpha)
+
+func _with_alpha(color: Color, alpha: float) -> Color:
+	return Color(color.r, color.g, color.b, alpha)
 
 func _build_visuals() -> void:
 	_body_poly = Polygon2D.new()
