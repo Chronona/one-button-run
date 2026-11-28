@@ -157,6 +157,9 @@ func _set_danger_cue(active: bool) -> void:
 	if danger_label.visible != active:
 		danger_label.visible = active
 	if active:
+		var safe_phase: int = (player_phase + 1) % PHASE_COUNT
+		danger_label.text = "反転! %sへ" % PALETTE.NAMES[safe_phase]
+		danger_label.modulate = PALETTE.COLORS[safe_phase]
 		# _elapsed から透明度を決めるので、タイマーや Tween を増やさず決定論的なまま。
 		var pulse := 0.5 + 0.5 * sin(_elapsed * DANGER_PULSE_SPEED)
 		danger_label.modulate.a = lerpf(DANGER_PULSE_MIN_ALPHA, 1.0, pulse)
